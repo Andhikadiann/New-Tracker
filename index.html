@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Coin Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#0b1220">
+<style>
+:root{--bg:#f8fafc;--fg:#0f172a;--mut:#64748b;--card:#fff;--line:#e2e8f0;--acc:#2563eb}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1220;--fg:#e5e7eb;--mut:#94a3b8;--card:#111a2e;--line:#1f2a44;--acc:#60a5fa}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
+main{max-width:760px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h1{font-size:28px;margin:0}h2{font-size:13px;color:var(--mut);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
+.mut{color:var(--mut);font-size:13px}.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.bar{height:6px;border-radius:3px;background:var(--acc);margin-top:3px}
+.scroll{overflow-x:auto}
+input,select,button{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);max-width:100%}
+button{background:var(--acc);color:#fff;border:0;cursor:pointer}
+form{display:grid;gap:8px}
+.r{text-align:right}
+</style>
+</head>
+<body>
+<main>
+  <div class="card"><h2>Total portofolio</h2><h1 id="usd">-</h1><div class="mut" id="idr"></div><div class="mut" id="meta"></div></div>
+  <div class="card"><h2>Per jaringan</h2><div id="chains"></div></div>
+  <div class="card">
+    <h2>Aset <label class="mut" style="float:right"><input type="checkbox" id="all"> tampilkan tanpa harga</label></h2>
+    <div class="scroll"><div id="hold"></div></div>
+  </div>
+  <div class="card">
+    <h2>Tambah wallet (token terdeteksi otomatis)</h2>
+    <form id="f">
+      <input name="label" placeholder="Label, mis. Metamask main" required>
+      <input name="chain" placeholder="Chain: evm, sol, sui, aptos, ton, ronin, mexc, indodax (kosong = otomatis)">
+      <input name="address" placeholder="Alamat wallet (kosong untuk exchange)">
+      <button>Tambah &amp; scan</button>
+    </form>
+    <p class="mut" id="msg"></p>
+    <button id="sync">Sync semua</button> <button id="rf">Refresh</button>
+  </div>
+</main>
+<script>
+const API = 'PASTE_URL_WEB_APP_/exec';
+const $ = s => document.querySelector(s);
+const tok = () => localStorage.getItem('t') || (localStorage.setItem('t', prompt('Token') || ''), localStorage.getItem('t'));
+const get = a => fetch(API + '?action=' + a + '&token=' + encodeURIComponent(tok())).then(r => r.json());
+const post = b => fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: tok() }, b)) }).then(r => r.json());
+const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+const idr = n => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0);
+const num = n => new Intl.NumberFormat('en-US', { maximumSignificantDigits: 8 }).format(n);
+const el = (t, txt, cls) => { const e = document.createElement(t); e.textContent = txt; if (cls) e.className = cls; return e; };
+let data = JSON.parse(localStorage.getItem('p') || 'null');
+
+function line(a, b, c) {
+  const r = el('div', '', 'row'), l = el('div', ''), v = el('div', b, 'r');
+  l.append(el('b', a), el('div', c || '', 'mut'));
+  r.append(l, v);
+  return r;
+}
+
+function render() {
+  if (!data) return;
+  $('#usd').textContent = usd(data.total_usd);
+  $('#idr').textContent = data.idr_rate ? idr(data.total_idr) : '';
+  $('#meta').textContent = data.unpriced ? data.unpriced + ' aset tanpa harga (kemungkinan token spam)' : '';
+  const ch = $('#chains'); ch.replaceChildren();
+  const max = (data.by_chain[0] || { usd: 1 }).usd || 1;
+  data.by_chain.forEach(c => {
+    const r = line(c.key, usd(c.usd));
+    const bar = el('div', '', 'bar'); bar.style.width = Math.max(2, c.usd / max * 100) + '%';
+    r.firstChild.append(bar); ch.append(r);
+  });
+  const h = $('#hold'); h.replaceChildren();
+  data.holdings.filter(x => x.priced || $('#all').checked).forEach(x =>
+    h.append(line(x.symbol || '?', x.priced ? usd(x.usd) : '-', num(x.amount) + ' · ' + x.wallet + ' · ' + x.chain)));
+}
+
+async function load() {
+  const d = await get('portfolio');
+  if (d.error) { $('#msg').textContent = d.error; if (d.error === 'unauthorized') localStorage.removeItem('t'); return; }
+  data = d; localStorage.setItem('p', JSON.stringify(d)); render();
+}
+
+$('#all').onchange = render;
+$('#rf').onclick = load;
+$('#sync').onclick = async () => { $('#msg').textContent = 'Sync berjalan...'; const r = await post({ action: 'sync' }); $('#msg').textContent = r.error || 'Selesai'; load(); };
+$('#f').onsubmit = async e => {
+  e.preventDefault();
+  $('#msg').textContent = 'Scanning wallet...';
+  const r = await post(Object.assign({ action: 'addWallet' }, Object.fromEntries(new FormData(e.target))));
+  $('#msg').textContent = r.error || r.status;
+  if (!r.error) { e.target.reset(); load(); }
+};
+
+render(); load();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
