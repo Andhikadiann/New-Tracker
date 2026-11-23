@@ -45,7 +45,7 @@ form{display:grid;gap:8px}
   </div>
 </main>
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbxfzbxNYR_pGChOQO8J96ddlkYWWz6lbeDC32Kc2z_Y75UwonreYveOGdL6c5pjWZA/exec';
+const API = 'exec';
 const $ = s => document.querySelector(s);
 const tok = () => localStorage.getItem('t') || (localStorage.setItem('t', prompt('Token') || ''), localStorage.getItem('t'));
 const get = a => fetch(API + '?action=' + a + '&token=' + encodeURIComponent(tok())).then(r => r.json());
