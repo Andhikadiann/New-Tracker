@@ -3,101 +3,313 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="color-scheme" content="dark">
 <title>Coin Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<meta name="theme-color" content="#0b1220">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#f8fafc;--fg:#0f172a;--mut:#64748b;--card:#fff;--line:#e2e8f0;--acc:#2563eb}
-@media(prefers-color-scheme:dark){:root{--bg:#0b1220;--fg:#e5e7eb;--mut:#94a3b8;--card:#111a2e;--line:#1f2a44;--acc:#60a5fa}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,sans-serif;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))}
-main{max-width:760px;margin:auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
-h1{font-size:28px;margin:0}h2{font-size:13px;color:var(--mut);margin:0 0 8px;text-transform:uppercase;letter-spacing:.04em}
-.mut{color:var(--mut);font-size:13px}.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
-.bar{height:6px;border-radius:3px;background:var(--acc);margin-top:3px}
-.scroll{overflow-x:auto}
-input,select,button{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);max-width:100%}
-button{background:var(--acc);color:#fff;border:0;cursor:pointer}
-form{display:grid;gap:8px}
-.r{text-align:right}
+:root{--bg:#0a0e1a;--s1:#121a2b;--s2:#18223a;--ln:#222f4d;--tx:#e6ebf5;--mu:#8b97b1;--ac:#7c9cff;--up:#4ade80;--dn:#f87171;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;padding:env(safe-area-inset-top) 0 calc(78px + env(safe-area-inset-bottom))}
+#app{max-width:720px;margin:auto;padding:16px 14px}
+h2{font-size:12px;font-weight:600;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.card{background:var(--s1);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:14px}
+.hero{background:linear-gradient(135deg,#243a74,#121a2b 72%);border-color:#2c3f78}
+.big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.mu{color:var(--mu);font-size:13px}.up{color:var(--up)}.dn{color:var(--dn)}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ln)}
+.row:first-child,h2+.row,.bar+.row{border-top:0;padding-top:0}
+.g{flex:1;min-width:0}.g b{display:block;font-weight:600}.g .mu{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r{text-align:right}.r b{display:block;font-weight:600}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#0a0e1a;flex:none}
+.chips{display:flex;gap:6px;margin-top:12px}
+.chip{padding:5px 12px;border-radius:99px;background:var(--s2);color:var(--mu);border:0;font:inherit;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ac);color:#0a0e1a;font-weight:600}
+.chart{height:110px;margin-top:12px}.chart svg{width:100%;height:100%}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin:4px 0 14px;background:var(--s2)}.bar i{display:block;height:100%}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+input,select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--s2);color:var(--tx);font:inherit;margin-bottom:8px}
+input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}
+.btn{padding:11px 16px;border-radius:12px;border:0;background:var(--ac);color:#0a0e1a;font:inherit;font-weight:600;cursor:pointer}
+.btn.sec{background:var(--s2);color:var(--tx);border:1px solid var(--ln)}.btn.del{background:#3a1d24;color:var(--dn)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:11px;padding:2px 8px;border-radius:99px;background:#16342a;color:var(--up);white-space:nowrap}.badge.e{background:#3a1d24;color:var(--dn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid2 .card{margin:0}
+.lbl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:10px}.lbl input{width:auto;margin:0}
+#nav{position:fixed;inset:auto 0 0;display:flex;justify-content:space-around;background:rgba(18,26,43,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--ln);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
+#nav button{background:0;border:0;color:var(--mu);font:inherit;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;cursor:pointer}
+#nav button.on{color:var(--ac)}
+svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--s2);border:1px solid var(--ln);padding:10px 16px;border-radius:12px;font-size:14px;max-width:90vw;z-index:9}
+.gate{min-height:80vh;display:grid;place-items:center}.gate .card{width:100%;max-width:420px}
+.gate h1{font-size:22px;margin-bottom:6px}
 </style>
 </head>
 <body>
-<main>
-  <div class="card"><h2>Total portofolio</h2><h1 id="usd">-</h1><div class="mut" id="idr"></div><div class="mut" id="meta"></div></div>
-  <div class="card"><h2>Per jaringan</h2><div id="chains"></div></div>
-  <div class="card">
-    <h2>Aset <label class="mut" style="float:right"><input type="checkbox" id="all"> tampilkan tanpa harga</label></h2>
-    <div class="scroll"><div id="hold"></div></div>
-  </div>
-  <div class="card">
-    <h2>Tambah wallet (token terdeteksi otomatis)</h2>
-    <form id="f">
-      <input name="label" placeholder="Label, mis. Metamask main" required>
-      <input name="chain" placeholder="Chain: evm, sol, sui, aptos, ton, ronin, mexc, indodax (kosong = otomatis)">
-      <input name="address" placeholder="Alamat wallet (kosong untuk exchange)">
-      <button>Tambah &amp; scan</button>
-    </form>
-    <p class="mut" id="msg"></p>
-    <button id="sync">Sync semua</button> <button id="rf">Refresh</button>
-  </div>
-</main>
+<div id="app"></div>
+<nav id="nav" hidden></nav>
 <script>
-const API = 'exec';
-const $ = s => document.querySelector(s);
-const tok = () => localStorage.getItem('t') || (localStorage.setItem('t', prompt('Token') || ''), localStorage.getItem('t'));
-const get = a => fetch(API + '?action=' + a + '&token=' + encodeURIComponent(tok())).then(r => r.json());
-const post = b => fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ token: tok() }, b)) }).then(r => r.json());
-const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n || 0);
+const $ = s => document.querySelector(s), enc = new TextEncoder(), dec = new TextDecoder();
+const H = (t, a, ...k) => {
+  const e = document.createElement(t);
+  for (const [n, v] of Object.entries(a || {})) {
+    if (n === 'class') e.className = v;
+    else if (n.startsWith('on')) e[n] = v;
+    else if (v !== false && v != null) e.setAttribute(n, v);
+  }
+  k.flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); });
+  return e;
+};
+const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: n > 0 && n < 1 ? 4 : 2 }).format(n || 0);
 const idr = n => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(n || 0);
-const num = n => new Intl.NumberFormat('en-US', { maximumSignificantDigits: 8 }).format(n);
-const el = (t, txt, cls) => { const e = document.createElement(t); e.textContent = txt; if (cls) e.className = cls; return e; };
-let data = JSON.parse(localStorage.getItem('p') || 'null');
+const qty = n => new Intl.NumberFormat('en-US', { maximumSignificantDigits: 7 }).format(n || 0);
+const pct = n => (n >= 0 ? '+' : '') + (n * 100).toFixed(2) + '%';
+const short = a => a ? a.slice(0, 6) + '…' + a.slice(-4) : 'tanpa alamat';
+const ago = d => { const m = (Date.now() - new Date(d)) / 6e4; return m < 1 ? 'baru saja' : m < 60 ? Math.round(m) + ' mnt lalu' : m < 1440 ? Math.round(m / 60) + ' jam lalu' : Math.round(m / 1440) + ' hari lalu'; };
+const COL = ['#7c9cff', '#4ade80', '#fbbf24', '#f472b6', '#22d3ee', '#a78bfa', '#fb923c', '#94a3b8'];
+const hue = s => COL[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % COL.length];
+const icon = d => { const w = document.createElement('span'); w.innerHTML = '<svg class="i" viewBox="0 0 24 24">' + d + '</svg>'; return w.firstChild; };
+const TABS = [
+  ['sum', 'Ringkasan', '<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
+  ['ast', 'Aset', '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a1.5 1.5 0 0 1 0 3H9.5a1.5 1.5 0 0 0 0 3H15"/>'],
+  ['trx', 'Transaksi', '<path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/>'],
+  ['wal', 'Wallet', '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'],
+  ['set', 'Pengaturan', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'],
+];
+const S = { tab: 'sum', cfg: null, d: null, logs: null, q: '', wf: '', all: false, range: 30, form: false };
 
-function line(a, b, c) {
-  const r = el('div', '', 'row'), l = el('div', ''), v = el('div', b, 'r');
-  l.append(el('b', a), el('div', c || '', 'mut'));
-  r.append(l, v);
-  return r;
+/* ---- kripto: URL + token hanya di perangkat; PIN opsional (PBKDF2 -> AES-GCM) ---- */
+const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
+const ub = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function dk(pin, salt) {
+  const k = await crypto.subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 200000, hash: 'SHA-256' }, k, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function seal(obj, pin) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await dk(pin, salt), enc.encode(JSON.stringify(obj)));
+  return JSON.stringify({ s: b64(salt), i: b64(iv), c: b64(ct) });
+}
+async function unseal(blob, pin) {
+  const o = JSON.parse(blob);
+  return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(o.i) }, await dk(pin, ub(o.s)), ub(o.c))));
+}
+async function saveCfg(pin) {
+  localStorage.removeItem('pf');
+  if (pin) { localStorage.setItem('cfg.enc', await seal(S.cfg, pin)); localStorage.removeItem('cfg'); }
+  else { localStorage.setItem('cfg', JSON.stringify(S.cfg)); localStorage.removeItem('cfg.enc'); }
+}
+
+/* ---- API ---- */
+async function api(action, data) {
+  const r = await fetch(S.cfg.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({}, data, { action, token: S.cfg.token })) });
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j;
+}
+const toast = m => { const t = H('div', { class: 'toast' }, m); document.body.append(t); setTimeout(() => t.remove(), 3000); };
+async function load() {
+  try {
+    S.d = await api('all');
+    if (!localStorage.getItem('cfg.enc')) localStorage.setItem('pf', JSON.stringify(S.d));
+    render();
+  } catch (e) { toast(e.message === 'unauthorized' ? 'Token ditolak. Periksa di Pengaturan.' : 'Gagal memuat: ' + e.message); }
+}
+async function run(fn, ok) {
+  toast('Memproses…');
+  try { await fn(); toast(ok); } catch (e) { toast(e.message); }
+  await load();
+}
+
+/* ---- komponen ---- */
+const row = (sym, sub, top, bot, cls) => H('div', { class: 'row' },
+  H('div', { class: 'av', style: 'background:' + hue(sym) }, (sym || '?')[0].toUpperCase()),
+  H('div', { class: 'g' }, H('b', {}, sym || '?'), H('span', { class: 'mu' }, sub)),
+  H('div', { class: 'r' }, H('b', { class: cls || '' }, top), H('span', { class: 'mu' }, bot || '')));
+const load0 = () => H('div', { class: 'card mu' }, 'Memuat data…');
+
+function chart(pts) {
+  if (pts.length < 2) return H('p', { class: 'mu', style: 'margin-top:12px' }, 'Grafik muncul setelah ≥2 hari riwayat (snapshot harian otomatis).');
+  const v = pts.map(x => x.usd), mn = Math.min(...v), mx = Math.max(...v);
+  const X = i => (i / (v.length - 1) * 300).toFixed(1), Y = y => (82 - (mx === mn ? .5 : (y - mn) / (mx - mn)) * 74).toFixed(1);
+  const d = v.map((y, i) => (i ? 'L' : 'M') + X(i) + ' ' + Y(y)).join('');
+  const w = H('div', { class: 'chart' });
+  w.innerHTML = '<svg viewBox="0 0 300 90" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c9cff" stop-opacity=".35"/><stop offset="1" stop-color="#7c9cff" stop-opacity="0"/></linearGradient></defs><path d="' + d + 'L300 90L0 90Z" fill="url(#g)"/><path d="' + d + '" fill="none" stroke="#7c9cff" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>';
+  return w;
+}
+
+/* ---- menu 1: ringkasan ---- */
+function vSum() {
+  const p = S.d && S.d.portfolio; if (!p) return load0();
+  const cut = S.range ? Date.now() - S.range * 864e5 : 0;
+  const pts = p.history.filter(x => x.date && x.usd > 0 && new Date(x.date) >= cut);
+  const dl = pts.length > 1 && pts[0].usd ? p.total_usd / pts[0].usd - 1 : null;
+  const top = {};
+  p.holdings.filter(h => h.priced).forEach(h => { const t = top[h.symbol] || (top[h.symbol] = { s: h.symbol, usd: 0, amt: 0 }); t.usd += h.usd; t.amt += h.amount; });
+  const tl = Object.values(top).sort((a, b) => b.usd - a.usd).slice(0, 6);
+  const tot = p.total_usd || 1, ch = p.by_chain.slice(0, 8);
+  const last = S.d.wallets.reduce((a, w) => Math.max(a, +new Date(w.last_sync || 0)), 0);
+  return H('div', {},
+    H('div', { class: 'card hero' },
+      H('div', { class: 'mu' }, 'Total portofolio'), H('div', { class: 'big' }, usd(p.total_usd)),
+      H('div', { class: 'mu' }, p.idr_rate ? idr(p.total_idr) : '', dl != null ? H('span', { class: dl >= 0 ? 'up' : 'dn' }, '  ' + pct(dl)) : null),
+      H('div', { class: 'chips' }, [[7, '7H'], [30, '30H'], [90, '90H'], [0, 'Semua']].map(([n, l]) => H('button', { class: 'chip' + (S.range === n ? ' on' : ''), onclick: () => { S.range = n; render(); } }, l))),
+      chart(pts)),
+    H('div', { class: 'card' }, H('h2', {}, 'Alokasi per jaringan'),
+      H('div', { class: 'bar' }, ch.map((c, i) => H('i', { style: 'width:' + (c.usd / tot * 100) + '%;background:' + COL[i % 8] }))),
+      ch.map((c, i) => H('div', { class: 'row' }, H('div', { class: 'g' }, H('span', { class: 'dot', style: 'background:' + COL[i % 8] }), c.key.toUpperCase()), H('div', { class: 'r' }, usd(c.usd), H('span', { class: 'mu' }, ' ' + (c.usd / tot * 100).toFixed(1) + '%'))))),
+    H('div', { class: 'card' }, H('h2', {}, 'Aset terbesar'), tl.map(t => row(t.s, qty(t.amt), usd(t.usd), (t.usd / tot * 100).toFixed(1) + '%'))),
+    H('div', { class: 'card' }, H('h2', {}, 'Status'),
+      H('p', { class: 'mu', style: 'margin-bottom:10px' }, S.d.wallets.length + ' wallet · sinkron terakhir ' + (last ? ago(last) : '-') + (p.unpriced ? ' · ' + p.unpriced + ' aset tanpa harga' : '')),
+      H('div', { class: 'btns' }, H('button', { class: 'btn', onclick: () => run(() => api('sync'), 'Sync selesai') }, 'Sync semua'), H('button', { class: 'btn sec', onclick: load }, 'Muat ulang'))));
+}
+
+/* ---- menu 2: aset ---- */
+function vAst() {
+  const p = S.d && S.d.portfolio; if (!p) return load0();
+  const box = H('div', { class: 'card' });
+  const fill = () => {
+    const q = S.q.toLowerCase();
+    const l = p.holdings.filter(h => (S.all || h.priced) && (!S.wf || h.wallet === S.wf) && (!q || (h.symbol + ' ' + h.name + ' ' + h.chain).toLowerCase().includes(q)));
+    box.replaceChildren(H('h2', {}, 'Aset', H('span', { class: 'mu' }, l.length + ' item')), l.length ? l.map(h => row(h.symbol, (h.name || h.chain) + ' · ' + h.wallet + ' · ' + h.chain, h.priced ? usd(h.usd) : '–', qty(h.amount))) : H('p', { class: 'mu' }, 'Tidak ada aset.'));
+  };
+  const ws = [...new Set(p.holdings.map(h => h.wallet))];
+  const sel = H('select', { onchange: e => { S.wf = e.target.value; fill(); } }, H('option', { value: '' }, 'Semua wallet'), ws.map(w => H('option', { value: w, selected: w === S.wf }, w)));
+  fill();
+  return H('div', {},
+    H('div', { class: 'card' }, H('input', { placeholder: 'Cari simbol / nama / jaringan…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), sel,
+      H('label', { class: 'lbl' }, H('input', { type: 'checkbox', checked: S.all ? '' : null, onchange: e => { S.all = e.target.checked; fill(); } }), 'Tampilkan aset tanpa harga (sering token spam)')),
+    box);
+}
+
+function editTx(t) {
+  const ty = prompt('Tipe: buy / sell / in / out / move', t.type); if (!ty) return;
+  const pr = prompt('Harga per koin (USD)', t.price || 0); if (pr === null) return;
+  run(() => api('updateTx', { id: t.id, type: ty.trim().toLowerCase(), price: pr }), 'Diperbarui');
+}
+
+/* ---- menu 3: transaksi + PnL ---- */
+function vTrx() {
+  if (!S.d) return load0();
+  const pn = S.d.pnl, re = pn.reduce((a, x) => a + x.realized, 0), un = pn.reduce((a, x) => a + x.unrealized, 0);
+  const f = H('form', { class: 'card', onsubmit: async e => {
+    e.preventDefault();
+    const o = Object.fromEntries(new FormData(e.target)); S.form = false;
+    await run(() => api('addTx', o), 'Transaksi disimpan');
+  } },
+    H('h2', {}, 'Transaksi baru'),
+    H('select', { name: 'type' }, [['buy', 'Beli'], ['sell', 'Jual'], ['in', 'Masuk (transfer)'], ['out', 'Keluar (transfer)']].map(([v, l]) => H('option', { value: v }, l))),
+    H('input', { name: 'wallet', placeholder: 'Wallet / exchange', list: 'wl' }),
+    H('datalist', { id: 'wl' }, S.d.wallets.map(w => H('option', { value: w.label }))),
+    H('input', { name: 'symbol', placeholder: 'Simbol, mis. BTC', required: '' }),
+    H('input', { name: 'qty', type: 'number', step: 'any', min: '0', placeholder: 'Jumlah', required: '' }),
+    H('input', { name: 'price', type: 'number', step: 'any', min: '0', placeholder: 'Harga per koin (USD)' }),
+    H('input', { name: 'fee', type: 'number', step: 'any', min: '0', placeholder: 'Biaya (USD)' }),
+    H('input', { name: 'date', type: 'date', value: new Date().toISOString().slice(0, 10) }),
+    H('input', { name: 'note', placeholder: 'Catatan' }),
+    H('button', { class: 'btn' }, 'Simpan'));
+  return H('div', {},
+    H('div', { class: 'grid2', style: 'margin-bottom:14px' },
+      H('div', { class: 'card' }, H('div', { class: 'mu' }, 'Realized PnL'), H('div', { class: 'big ' + (re >= 0 ? 'up' : 'dn'), style: 'font-size:22px' }, usd(re))),
+      H('div', { class: 'card' }, H('div', { class: 'mu' }, 'Unrealized PnL'), H('div', { class: 'big ' + (un >= 0 ? 'up' : 'dn'), style: 'font-size:22px' }, usd(un)))),
+    H('div', { class: 'card' }, H('h2', {}, 'Posisi (rata-rata biaya)'),
+      pn.length ? pn.map(x => row(x.symbol, qty(x.qty) + ' @ ' + usd(x.avg_cost), usd(x.value), pct(x.roi) + ' · R ' + usd(x.realized), x.roi >= 0 ? 'up' : 'dn')) : H('p', { class: 'mu' }, 'Catat transaksi beli/jual untuk menghitung PnL.')),
+    H('button', { class: 'btn', style: 'margin-bottom:14px', onclick: () => { S.form = !S.form; render(); } }, S.form ? 'Tutup' : '+ Tambah transaksi'),
+    S.form ? f : null,
+    H('div', { class: 'card' }, H('h2', {}, 'Riwayat'),
+      S.d.transactions.length ? S.d.transactions.map(t => H('div', { class: 'row' },
+        H('div', { class: 'g' }, H('b', {}, t.symbol + ' · ' + { buy: 'Beli', sell: 'Jual', in: 'Masuk', out: 'Keluar', move: 'Pindah internal' }[t.type]), H('span', { class: 'mu' }, new Date(t.date).toLocaleDateString('id-ID') + ' · ' + (t.wallet || '-') + (t.note ? ' · ' + t.note : '') + (t.source && t.source !== 'manual' ? ' · auto' : ''))),
+        H('div', { class: 'r' }, H('b', { class: t.type === 'move' ? '' : t.type === 'buy' || t.type === 'in' ? 'up' : 'dn' }, (t.type === 'move' ? '↔ ' : t.type === 'buy' || t.type === 'in' ? '+' : '-') + qty(t.qty)), H('span', { class: 'mu' }, t.price ? usd(t.price) : '')),
+        H('button', { class: 'chip', onclick: () => editTx(t) }, '✎'),
+        H('button', { class: 'chip', onclick: () => confirm('Hapus transaksi ini?') && run(() => api('deleteTx', { id: t.id }), 'Dihapus') }, '✕'))) : H('p', { class: 'mu' }, 'Belum ada transaksi.')));
+}
+
+/* ---- menu 4: wallet ---- */
+function vWal() {
+  if (!S.d) return load0();
+  const f = H('form', { class: 'card', onsubmit: async e => {
+    e.preventDefault();
+    const o = Object.fromEntries(new FormData(e.target)); e.target.reset();
+    await run(async () => { const r = await api('addWallet', o); toast(r.status); }, 'Wallet ditambahkan');
+  } },
+    H('h2', {}, 'Tambah wallet (token terdeteksi otomatis)'),
+    H('input', { name: 'label', placeholder: 'Label, mis. Metamask main', required: '' }),
+    H('input', { name: 'chain', placeholder: 'Chain (kosong = otomatis)', list: 'cl' }),
+    H('datalist', { id: 'cl' }, ['evm', 'sol', 'sui', 'aptos', 'ton', 'btc', 'ronin', 'kaia', 'wemix', 'imx', 'mexc', 'indodax'].map(c => H('option', { value: c }))),
+    H('input', { name: 'address', placeholder: 'Alamat (kosongkan untuk exchange)', autocomplete: 'off' }),
+    H('button', { class: 'btn' }, 'Tambah & scan'));
+  return H('div', {},
+    H('div', { class: 'card' }, H('h2', {}, 'Wallet & exchange'),
+      S.d.wallets.length ? S.d.wallets.map(w => H('div', { class: 'row' },
+        H('div', { class: 'g' }, H('b', {}, w.label), H('span', { class: 'mu' }, (w.chain || 'auto') + ' · ' + short(w.address) + ' · ' + (w.last_sync ? ago(w.last_sync) : 'belum sync'))),
+        H('span', { class: 'badge' + (String(w.status).startsWith('ERROR') ? ' e' : ''), title: w.status || '' }, String(w.status || '-').slice(0, 14)),
+        H('button', { class: 'chip', onclick: () => run(() => api('sync', { label: w.label }), 'Sync selesai') }, '↻'),
+        H('button', { class: 'chip', onclick: () => confirm('Hapus ' + w.label + '?') && run(() => api('removeWallet', { label: w.label }), 'Dihapus') }, '✕'))) : H('p', { class: 'mu' }, 'Belum ada wallet.')),
+    f);
+}
+
+/* ---- menu 5: pengaturan ---- */
+function vSet() {
+  const locked = !!localStorage.getItem('cfg.enc');
+  const pin = H('input', { type: 'password', placeholder: 'PIN baru (min. 4 karakter)', autocomplete: 'new-password' });
+  return H('div', {},
+    H('div', { class: 'card' }, H('h2', {}, 'Koneksi'),
+      H('p', { class: 'mu', style: 'margin-bottom:10px' }, 'Server: ' + new URL(S.cfg.url).host + ' · data tersimpan hanya di perangkat ini' + (locked ? ' (dienkripsi PIN)' : ' (tanpa PIN)')),
+      H('div', { class: 'btns' },
+        H('button', { class: 'btn sec', onclick: () => { ['cfg', 'cfg.enc', 'pf'].forEach(k => localStorage.removeItem(k)); S.cfg = null; S.d = null; render(); } }, 'Ganti URL / token'),
+        H('button', { class: 'btn del', onclick: () => { if (confirm('Hapus URL, token, dan cache dari perangkat ini?')) { localStorage.clear(); S.cfg = null; S.d = null; render(); } } }, 'Keluar'))),
+    H('div', { class: 'card' }, H('h2', {}, 'Kunci PIN'), pin,
+      H('div', { class: 'btns' },
+        H('button', { class: 'btn', onclick: async () => { if (pin.value.length < 4) return toast('PIN minimal 4 karakter'); await saveCfg(pin.value); toast('PIN aktif'); render(); } }, 'Simpan PIN'),
+        locked ? H('button', { class: 'btn sec', onclick: async () => { await saveCfg(''); toast('PIN dihapus'); render(); } }, 'Hapus PIN') : null)),
+    H('div', { class: 'card' }, H('h2', {}, 'Log server', H('button', { class: 'chip', onclick: async () => { try { S.logs = await api('logs'); render(); } catch (e) { toast(e.message); } } }, 'Muat')),
+      S.logs ? S.logs.map(l => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', { class: l.level === 'ERROR' ? 'dn' : '' }, l.level), H('span', { class: 'mu', style: 'white-space:normal' }, l.message)))) : H('p', { class: 'mu' }, 'Tekan Muat untuk melihat 60 log terakhir.')));
+}
+
+/* ---- gerbang: setup & buka kunci ---- */
+function gate(title, sub, form) { $('#nav').hidden = true; $('#app').replaceChildren(H('div', { class: 'gate' }, H('div', { class: 'card' }, H('h1', {}, title), H('p', { class: 'mu', style: 'margin-bottom:14px' }, sub), form))); }
+function setup() {
+  gate('Coin Tracker', 'Masukkan URL web app Apps Script dan APP_TOKEN. Keduanya hanya disimpan di perangkat ini, tidak ada di kode.', H('form', { onsubmit: async e => {
+    e.preventDefault();
+    const f = Object.fromEntries(new FormData(e.target));
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(f.url.trim())) return toast('URL harus diakhiri /exec');
+    S.cfg = { url: f.url.trim(), token: f.token.trim() };
+    try { await api('all'); } catch (err) { S.cfg = null; return toast(err.message); }
+    await saveCfg(f.pin && f.pin.length >= 4 ? f.pin : '');
+    start();
+  } },
+    H('input', { name: 'url', placeholder: 'https://script.google.com/macros/s/…/exec', required: '', autocomplete: 'off' }),
+    H('input', { name: 'token', type: 'password', placeholder: 'APP_TOKEN', required: '', autocomplete: 'off' }),
+    H('input', { name: 'pin', type: 'password', placeholder: 'PIN pengunci (opsional, min. 4)', autocomplete: 'new-password' }),
+    H('button', { class: 'btn', style: 'width:100%' }, 'Sambungkan')));
+}
+function unlock(blob) {
+  gate('Buka kunci', 'Masukkan PIN untuk mendekripsi koneksi.', H('form', { onsubmit: async e => {
+    e.preventDefault();
+    try { S.cfg = await unseal(blob, new FormData(e.target).get('pin')); start(); } catch (err) { toast('PIN salah'); }
+  } }, H('input', { name: 'pin', type: 'password', placeholder: 'PIN', required: '', autocomplete: 'current-password' }), H('button', { class: 'btn', style: 'width:100%' }, 'Buka')));
 }
 
 function render() {
-  if (!data) return;
-  $('#usd').textContent = usd(data.total_usd);
-  $('#idr').textContent = data.idr_rate ? idr(data.total_idr) : '';
-  $('#meta').textContent = data.unpriced ? data.unpriced + ' aset tanpa harga (kemungkinan token spam)' : '';
-  const ch = $('#chains'); ch.replaceChildren();
-  const max = (data.by_chain[0] || { usd: 1 }).usd || 1;
-  data.by_chain.forEach(c => {
-    const r = line(c.key, usd(c.usd));
-    const bar = el('div', '', 'bar'); bar.style.width = Math.max(2, c.usd / max * 100) + '%';
-    r.firstChild.append(bar); ch.append(r);
-  });
-  const h = $('#hold'); h.replaceChildren();
-  data.holdings.filter(x => x.priced || $('#all').checked).forEach(x =>
-    h.append(line(x.symbol || '?', x.priced ? usd(x.usd) : '-', num(x.amount) + ' · ' + x.wallet + ' · ' + x.chain)));
+  if (!S.cfg) return boot();
+  $('#nav').hidden = false;
+  $('#app').replaceChildren({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, set: vSet }[S.tab]());
+  $('#nav').replaceChildren(...TABS.map(([k, l, ic]) => H('button', { class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; render(); scrollTo(0, 0); } }, icon(ic), l)));
 }
-
-async function load() {
-  const d = await get('portfolio');
-  if (d.error) { $('#msg').textContent = d.error; if (d.error === 'unauthorized') localStorage.removeItem('t'); return; }
-  data = d; localStorage.setItem('p', JSON.stringify(d)); render();
+function start() {
+  const c = localStorage.getItem('pf');
+  if (c && !S.d && !localStorage.getItem('cfg.enc')) S.d = JSON.parse(c);
+  render(); load();
 }
-
-$('#all').onchange = render;
-$('#rf').onclick = load;
-$('#sync').onclick = async () => { $('#msg').textContent = 'Sync berjalan...'; const r = await post({ action: 'sync' }); $('#msg').textContent = r.error || 'Selesai'; load(); };
-$('#f').onsubmit = async e => {
-  e.preventDefault();
-  $('#msg').textContent = 'Scanning wallet...';
-  const r = await post(Object.assign({ action: 'addWallet' }, Object.fromEntries(new FormData(e.target))));
-  $('#msg').textContent = r.error || r.status;
-  if (!r.error) { e.target.reset(); load(); }
-};
-
-render(); load();
+function boot() {
+  const p = localStorage.getItem('cfg'), e = localStorage.getItem('cfg.enc');
+  if (p) { S.cfg = JSON.parse(p); return start(); }
+  if (e) return unlock(e);
+  setup();
+}
+boot();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
