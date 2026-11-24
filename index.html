@@ -13,11 +13,11 @@
 :root{--bg:#0a0e1a;--s1:#121a2b;--s2:#18223a;--ln:#222f4d;--tx:#e6ebf5;--mu:#8b97b1;--ac:#7c9cff;--up:#4ade80;--dn:#f87171;color-scheme:dark}
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;padding:env(safe-area-inset-top) 0 calc(78px + env(safe-area-inset-bottom))}
-#app{max-width:720px;margin:auto;padding:16px 14px}
+#app{max-width:480px;margin:auto;padding:14px 12px}
 h2{font-size:12px;font-weight:600;color:var(--mu);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
 .card{background:var(--s1);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:14px}
 .hero{background:linear-gradient(135deg,#243a74,#121a2b 72%);border-color:#2c3f78}
-.big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.big{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
 .mu{color:var(--mu);font-size:13px}.up{color:var(--up)}.dn{color:var(--dn)}
 .row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--ln)}
 .row:first-child,h2+.row,.bar+.row{border-top:0;padding-top:0}
@@ -39,8 +39,8 @@ input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}
 .badge{font-size:11px;padding:2px 8px;border-radius:99px;background:#16342a;color:var(--up);white-space:nowrap}.badge.e{background:#3a1d24;color:var(--dn)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid2 .card{margin:0}
 .lbl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:10px}.lbl input{width:auto;margin:0}
-#nav{position:fixed;inset:auto 0 0;display:flex;justify-content:space-around;background:rgba(18,26,43,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--ln);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
-#nav button{position:relative;background:0;border:0;color:var(--mu);font:inherit;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 5px;cursor:pointer}
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;justify-content:space-around;background:rgba(18,26,43,.92);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--ln);border-bottom:0;border-radius:18px 18px 0 0;padding:6px 2px calc(6px + env(safe-area-inset-bottom))}
+#nav button{position:relative;background:0;border:0;color:var(--mu);font:inherit;font-size:11px;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer}
 .pip{position:absolute;top:1px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--dn)}
 #nav button.on{color:var(--ac)}
 svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -53,8 +53,9 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 <div id="app"></div>
 <nav id="nav" hidden></nav>
 <script>
-const APP_VERSION = '1.5.0', MIN_BACKEND = '1.5.0';
+const APP_VERSION = '1.6.0', MIN_BACKEND = '1.6.0', BUILD = '2026-11-24';
 const CHANGES = [
+  ['1.6.0', 'Perbaikan daftar Aset, tandai spam manual + deteksi otomatis, tampilan potret, Pembaruan pindah ke Pengaturan.'],
   ['1.5.0', 'Menu Pembaruan, nomor versi, cek dan paksa pembaruan.'],
   ['1.4.0', 'Perubahan nilai 24 jam dan 7 hari; snapshot per jam.'],
   ['1.3.0', 'Swap DEX jadi beli/jual otomatis; transfer internal netral.'],
@@ -86,10 +87,9 @@ const TABS = [
   ['ast', 'Aset', '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a1.5 1.5 0 0 1 0 3H9.5a1.5 1.5 0 0 0 0 3H15"/>'],
   ['trx', 'Transaksi', '<path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/>'],
   ['wal', 'Wallet', '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'],
-  ['upd', 'Pembaruan', '<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>'],
   ['set', 'Pengaturan', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'],
 ];
-const S = { upd: null, newer: false, tab: 'sum', cfg: null, d: null, logs: null, q: '', wf: '', all: false, range: 30, form: false };
+const S = { sp: false, ign: null, upd: null, newer: false, tab: 'sum', cfg: null, d: null, logs: null, q: '', wf: '', all: false, range: 30, form: false };
 
 /* ---- kripto: URL + token hanya di perangkat; PIN opsional (PBKDF2 -> AES-GCM) ---- */
 const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
@@ -180,27 +180,28 @@ function vSum() {
 }
 
 /* ---- menu 2: aset ---- */
+function assetRow(h) {
+  const r = row(h.symbol, (h.name || h.chain) + ' · ' + h.chain + ' · ' + h.wallet, h.priced ? usd(h.usd) : '–', qty(h.amount));
+  if (h.spam) r.style.opacity = '.6';
+  if (!h.priced && h.contract) r.append(H('button', { class: 'chip', onclick: () => confirm('Tandai ' + h.symbol + ' sebagai spam dan sembunyikan?') && run(() => api('ignoreAdd', { contract: h.contract, symbol: h.symbol, chain: h.chain }), 'Ditandai spam') }, 'Spam'));
+  return r;
+}
 function vAst() {
   const p = S.d && S.d.portfolio; if (!p) return load0();
-  const box = H('div', { class: 'card' });
+  const bar = H('div', { class: 'chips', style: 'margin:0 0 10px' }), box = H('div', { class: 'card' });
   const fill = () => {
     const q = S.q.toLowerCase();
-    const l = p.holdings.filter(h => (S.all || h.priced) && (!S.wf || h.wallet === S.wf) && (!q || (h.symbol + ' ' + h.name + ' ' + h.chain).toLowerCase().includes(q)));
-    box.replaceChildren(H('h2', {}, 'Aset', H('span', { class: 'mu' }, l.length + ' item')), l.length ? l.map(h => row(h.symbol, (h.name || h.chain) + ' · ' + h.wallet + ' · ' + h.chain, h.priced ? usd(h.usd) : '–', qty(h.amount))) : H('p', { class: 'mu' }, 'Tidak ada aset.'));
+    const l = p.holdings.filter(x => (x.priced || (x.spam ? S.sp : S.all)) && (!S.wf || x.wallet === S.wf) && (!q || (x.symbol + ' ' + x.name + ' ' + x.chain).toLowerCase().includes(q)));
+    bar.replaceChildren(
+      H('button', { class: 'chip' + (S.all ? ' on' : ''), onclick: () => { S.all = !S.all; fill(); } }, 'Tanpa harga ' + (p.unpriced || 0)),
+      H('button', { class: 'chip' + (S.sp ? ' on' : ''), onclick: () => { S.sp = !S.sp; fill(); } }, 'Spam ' + (p.spam || 0)));
+    box.replaceChildren(H('h2', {}, 'Aset', H('span', { class: 'mu' }, l.length + ' item')), ...(l.length ? l.map(assetRow) : [H('p', { class: 'mu' }, 'Tidak ada aset.')]));
   };
-  const ws = [...new Set(p.holdings.map(h => h.wallet))];
-  const sel = H('select', { onchange: e => { S.wf = e.target.value; fill(); } }, H('option', { value: '' }, 'Semua wallet'), ws.map(w => H('option', { value: w, selected: w === S.wf }, w)));
+  const ws = [...new Set(p.holdings.map(x => x.wallet))];
+  const sel = H('select', { onchange: e => { S.wf = e.target.value; fill(); } }, H('option', { value: '' }, 'Semua wallet'), ws.map(w => H('option', { value: w, selected: w === S.wf })));
+  ws.forEach((w, i) => { sel.options[i + 1].textContent = w; });
   fill();
-  return H('div', {},
-    H('div', { class: 'card' }, H('input', { placeholder: 'Cari simbol / nama / jaringan…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), sel,
-      H('label', { class: 'lbl' }, H('input', { type: 'checkbox', checked: S.all ? '' : null, onchange: e => { S.all = e.target.checked; fill(); } }), 'Tampilkan aset tanpa harga (sering token spam)')),
-    box);
-}
-
-function editTx(t) {
-  const ty = prompt('Tipe: buy / sell / in / out / move', t.type); if (!ty) return;
-  const pr = prompt('Harga per koin (USD)', t.price || 0); if (pr === null) return;
-  run(() => api('updateTx', { id: t.id, type: ty.trim().toLowerCase(), price: pr }), 'Diperbarui');
+  return H('div', {}, H('div', { class: 'card' }, H('input', { placeholder: 'Cari simbol / nama / jaringan…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), sel, bar), box);
 }
 
 /* ---- menu 3: transaksi + PnL ---- */
@@ -272,7 +273,7 @@ async function checkUpdate(silent) {
     if (!m) throw new Error('versi tidak terbaca');
     S.upd = { remote: m[1], at: Date.now() };
     S.newer = vcmp(m[1], APP_VERSION) > 0;
-    if (silent) { if (S.newer) toast('Versi baru tersedia: v' + m[1] + ' (menu Pembaruan)'); }
+    if (silent) { if (S.newer) toast('Versi baru tersedia: v' + m[1] + ' (Pengaturan → Pembaruan)'); }
     else toast(S.newer ? 'Ada versi baru v' + m[1] : 'Sudah versi terbaru');
   } catch (e) { if (!silent) toast('Gagal cek: ' + e.message); }
   if (S.cfg) render();
@@ -285,29 +286,27 @@ async function applyUpdate() {
   } catch (e) { /* lanjut muat ulang */ }
   setTimeout(() => location.replace(location.pathname + '?u=' + Date.now()), 600);
 }
-function vUpd() {
+function cardUpd() {
   const bv = S.d && S.d.version, rem = S.upd && S.upd.remote, bOld = !bv || vcmp(bv, MIN_BACKEND) < 0;
-  const line = (a, b, c, cls) => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', {}, a), H('span', { class: 'mu' }, b)), H('div', { class: 'r' }, H('b', { class: cls || '' }, c)));
-  return H('div', {},
-    H('div', { class: 'card' }, H('h2', {}, 'Versi'),
-      line('Aplikasi (PWA)', 'terpasang di perangkat ini', 'v' + APP_VERSION),
-      line('Backend (Apps Script)', 'deployment yang aktif', bv ? 'v' + bv : 'lama / tidak diketahui', bOld ? 'dn' : ''),
-      line('Terbaru di server', S.upd ? 'dicek ' + ago(S.upd.at) : 'belum dicek', rem ? 'v' + rem : '-', S.newer ? 'up' : '')),
-    bOld ? H('div', { class: 'card' }, H('b', { class: 'dn' }, 'Backend belum diperbarui'), H('p', { class: 'mu', style: 'margin-top:6px' }, 'Tempel Code.gs terbaru di Apps Script, jalankan setup(), lalu Deploy → Manage deployments → Edit → New version.')) : null,
-    H('div', { class: 'card' },
-      H('div', { class: 'btns' }, H('button', { class: 'btn sec', onclick: () => checkUpdate(false) }, 'Periksa pembaruan'), H('button', { class: 'btn', onclick: applyUpdate }, S.newer ? 'Perbarui ke v' + rem : 'Paksa muat ulang')),
-      H('p', { class: 'mu', style: 'margin-top:10px' }, 'Hanya menghapus cache aplikasi. URL, token, dan PIN tetap tersimpan.')),
-    H('div', { class: 'card' }, H('h2', {}, 'Riwayat versi'), CHANGES.map(([v, n]) => H('div', { class: 'row' }, H('b', {}, 'v' + v), H('span', { class: 'mu', style: 'white-space:normal' }, n)))));
+  return H('div', { class: 'card' }, H('h2', {}, 'Pembaruan'),
+    H('p', { class: 'mu' }, 'Coin Tracker v' + APP_VERSION + ' · build ' + BUILD),
+    H('p', { class: 'mu' }, 'Server: ' + (bv ? 'v' + bv : 'lama / tidak diketahui') + (rem ? ' · terbaru v' + rem : '')),
+    bOld ? H('p', { class: 'dn', style: 'font-size:13px;margin-top:6px' }, 'Backend perlu diperbarui: tempel Code.gs terbaru, jalankan setup(), lalu Deploy → Manage deployments → Edit → New version.') : null,
+    H('div', { class: 'btns', style: 'margin-top:10px' },
+      H('button', { class: 'btn sec', onclick: () => checkUpdate(false) }, 'Periksa pembaruan'),
+      H('button', { class: 'btn' + (S.newer ? '' : ' sec'), onclick: applyUpdate }, S.newer ? 'Perbarui ke v' + rem : 'Paksa muat ulang')),
+    H('details', { style: 'margin-top:10px' }, H('summary', { class: 'mu' }, 'Riwayat versi'), CHANGES.map(c => H('p', { class: 'mu', style: 'margin-top:6px' }, 'v' + c[0] + ' — ' + c[1]))));
 }
 
 /* ---- menu 5: pengaturan ---- */
 function vSet() {
   const locked = !!localStorage.getItem('cfg.enc');
   const pin = H('input', { type: 'password', placeholder: 'PIN baru (min. 4 karakter)', autocomplete: 'new-password' });
+  const loadIgn = async () => { try { S.ign = await api('ignoreList'); render(); } catch (e) { toast(e.message); } };
   return H('div', {},
+    cardUpd(),
     H('div', { class: 'card' }, H('h2', {}, 'Koneksi'),
-      H('p', { class: 'mu', style: 'margin-bottom:6px' }, 'Versi: PWA v' + APP_VERSION + ' · Backend ' + (S.d && S.d.version ? 'v' + S.d.version : 'tidak diketahui')),
-      H('p', { class: 'mu', style: 'margin-bottom:10px' }, 'Server: ' + new URL(S.cfg.url).host + ' · data tersimpan hanya di perangkat ini' + (locked ? ' (dienkripsi PIN)' : ' (tanpa PIN)')),
+      H('p', { class: 'mu', style: 'margin-bottom:10px' }, 'Server: ' + new URL(S.cfg.url).host + ' · tersimpan di perangkat' + (locked ? ' (dienkripsi PIN)' : ' (tanpa PIN)')),
       H('div', { class: 'btns' },
         H('button', { class: 'btn sec', onclick: () => { ['cfg', 'cfg.enc', 'pf'].forEach(k => localStorage.removeItem(k)); S.cfg = null; S.d = null; render(); } }, 'Ganti URL / token'),
         H('button', { class: 'btn del', onclick: () => { if (confirm('Hapus URL, token, dan cache dari perangkat ini?')) { localStorage.clear(); S.cfg = null; S.d = null; render(); } } }, 'Keluar'))),
@@ -315,6 +314,11 @@ function vSet() {
       H('div', { class: 'btns' },
         H('button', { class: 'btn', onclick: async () => { if (pin.value.length < 4) return toast('PIN minimal 4 karakter'); await saveCfg(pin.value); toast('PIN aktif'); render(); } }, 'Simpan PIN'),
         locked ? H('button', { class: 'btn sec', onclick: async () => { await saveCfg(''); toast('PIN dihapus'); render(); } }, 'Hapus PIN') : null)),
+    H('div', { class: 'card' }, H('h2', {}, 'Daftar spam', H('button', { class: 'chip', onclick: loadIgn }, 'Muat')),
+      S.ign ? (S.ign.length ? S.ign.map(x => H('div', { class: 'row' },
+        H('div', { class: 'g' }, H('b', {}, x.note || 'token'), H('span', { class: 'mu' }, String(x.key))),
+        H('button', { class: 'chip', onclick: () => run(async () => { await api('ignoreRemove', { key: x.key }); S.ign = await api('ignoreList'); }, 'Dipulihkan, muncul lagi saat sync') }, 'Pulihkan'))) : H('p', { class: 'mu' }, 'Belum ada token yang ditandai.'))
+        : H('p', { class: 'mu' }, 'Token yang Anda tandai spam (tombol "Spam" di menu Aset). Tekan Muat untuk melihat atau memulihkan.')),
     H('div', { class: 'card' }, H('h2', {}, 'Log server', H('button', { class: 'chip', onclick: async () => { try { S.logs = await api('logs'); render(); } catch (e) { toast(e.message); } } }, 'Muat')),
       S.logs ? S.logs.map(l => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', { class: l.level === 'ERROR' ? 'dn' : '' }, l.level), H('span', { class: 'mu', style: 'white-space:normal' }, l.message)))) : H('p', { class: 'mu' }, 'Tekan Muat untuk melihat 60 log terakhir.')));
 }
@@ -346,8 +350,8 @@ function unlock(blob) {
 function render() {
   if (!S.cfg) return boot();
   $('#nav').hidden = false;
-  $('#app').replaceChildren({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, upd: vUpd, set: vSet }[S.tab]());
-  $('#nav').replaceChildren(...TABS.map(([k, l, ic]) => H('button', { class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; render(); scrollTo(0, 0); } }, icon(ic), l, k === 'upd' && S.newer ? H('i', { class: 'pip' }) : null)));
+  $('#app').replaceChildren({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, set: vSet }[S.tab]());
+  $('#nav').replaceChildren(...TABS.map(([k, l, ic]) => H('button', { class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; render(); scrollTo(0, 0); } }, icon(ic), l, k === 'set' && S.newer ? H('i', { class: 'pip' }) : null)));
 }
 function start() {
   const c = localStorage.getItem('pf');
