@@ -24,6 +24,7 @@ h2{font-size:12px;font-weight:600;color:var(--mu);letter-spacing:.06em;text-tran
 .g{flex:1;min-width:0}.g b{display:block;font-weight:600}.g .mu{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .r{text-align:right}.r b{display:block;font-weight:600}
 .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#0a0e1a;flex:none}
+.stats{display:flex;gap:22px;margin-top:12px}.stats b{display:block;font-size:14px}
 .chips{display:flex;gap:6px;margin-top:12px}
 .chip{padding:5px 12px;border-radius:99px;background:var(--s2);color:var(--mu);border:0;font:inherit;font-size:13px;cursor:pointer}
 .chip.on{background:var(--ac);color:#0a0e1a;font-weight:600}
@@ -39,7 +40,8 @@ input:focus,select:focus{outline:2px solid var(--ac);outline-offset:-1px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid2 .card{margin:0}
 .lbl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin-bottom:10px}.lbl input{width:auto;margin:0}
 #nav{position:fixed;inset:auto 0 0;display:flex;justify-content:space-around;background:rgba(18,26,43,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--ln);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
-#nav button{background:0;border:0;color:var(--mu);font:inherit;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;cursor:pointer}
+#nav button{position:relative;background:0;border:0;color:var(--mu);font:inherit;font-size:10.5px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 5px;cursor:pointer}
+.pip{position:absolute;top:1px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--dn)}
 #nav button.on{color:var(--ac)}
 svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--s2);border:1px solid var(--ln);padding:10px 16px;border-radius:12px;font-size:14px;max-width:90vw;z-index:9}
@@ -51,6 +53,14 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 <div id="app"></div>
 <nav id="nav" hidden></nav>
 <script>
+const APP_VERSION = '1.5.0', MIN_BACKEND = '1.5.0';
+const CHANGES = [
+  ['1.5.0', 'Menu Pembaruan, nomor versi, cek dan paksa pembaruan.'],
+  ['1.4.0', 'Perubahan nilai 24 jam dan 7 hari; snapshot per jam.'],
+  ['1.3.0', 'Swap DEX jadi beli/jual otomatis; transfer internal netral.'],
+  ['1.2.0', 'Impor transaksi otomatis (EVM dan MEXC).'],
+  ['1.1.0', 'Tampilan dark 5 menu, kredensial di perangkat, deteksi Sui.'],
+];
 const $ = s => document.querySelector(s), enc = new TextEncoder(), dec = new TextDecoder();
 const H = (t, a, ...k) => {
   const e = document.createElement(t);
@@ -76,9 +86,10 @@ const TABS = [
   ['ast', 'Aset', '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h4.5a1.5 1.5 0 0 1 0 3H9.5a1.5 1.5 0 0 0 0 3H15"/>'],
   ['trx', 'Transaksi', '<path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/>'],
   ['wal', 'Wallet', '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'],
+  ['upd', 'Pembaruan', '<path d="M12 3v12M7 10l5 5 5-5M4 20h16"/>'],
   ['set', 'Pengaturan', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'],
 ];
-const S = { tab: 'sum', cfg: null, d: null, logs: null, q: '', wf: '', all: false, range: 30, form: false };
+const S = { upd: null, newer: false, tab: 'sum', cfg: null, d: null, logs: null, q: '', wf: '', all: false, range: 30, form: false };
 
 /* ---- kripto: URL + token hanya di perangkat; PIN opsional (PBKDF2 -> AES-GCM) ---- */
 const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
@@ -145,7 +156,6 @@ function vSum() {
   const p = S.d && S.d.portfolio; if (!p) return load0();
   const cut = S.range ? Date.now() - S.range * 864e5 : 0;
   const pts = p.history.filter(x => x.date && x.usd > 0 && new Date(x.date) >= cut);
-  const dl = pts.length > 1 && pts[0].usd ? p.total_usd / pts[0].usd - 1 : null;
   const top = {};
   p.holdings.filter(h => h.priced).forEach(h => { const t = top[h.symbol] || (top[h.symbol] = { s: h.symbol, usd: 0, amt: 0 }); t.usd += h.usd; t.amt += h.amount; });
   const tl = Object.values(top).sort((a, b) => b.usd - a.usd).slice(0, 6);
@@ -154,7 +164,10 @@ function vSum() {
   return H('div', {},
     H('div', { class: 'card hero' },
       H('div', { class: 'mu' }, 'Total portofolio'), H('div', { class: 'big' }, usd(p.total_usd)),
-      H('div', { class: 'mu' }, p.idr_rate ? idr(p.total_idr) : '', dl != null ? H('span', { class: dl >= 0 ? 'up' : 'dn' }, '  ' + pct(dl)) : null),
+      H('div', { class: 'mu' }, p.idr_rate ? idr(p.total_idr) : ''),
+      H('div', { class: 'stats' }, [['24 jam', p.change && p.change.d1], ['7 hari', p.change && p.change.d7]].map(([l, c]) => H('div', {}, H('span', { class: 'mu' }, l),
+        c ? H('b', { class: c.usd >= 0 ? 'up' : 'dn' }, (c.usd >= 0 ? '+' : '') + usd(c.usd) + ' (' + pct(c.pct) + ')') : H('b', { class: 'mu' }, 'menunggu data')))),
+      H('div', { class: 'mu', style: 'font-size:11px;margin-top:6px' }, 'Selisih nilai total, termasuk setoran/penarikan.'),
       H('div', { class: 'chips' }, [[7, '7H'], [30, '30H'], [90, '90H'], [0, 'Semua']].map(([n, l]) => H('button', { class: 'chip' + (S.range === n ? ' on' : ''), onclick: () => { S.range = n; render(); } }, l))),
       chart(pts)),
     H('div', { class: 'card' }, H('h2', {}, 'Alokasi per jaringan'),
@@ -250,12 +263,50 @@ function vWal() {
     f);
 }
 
+/* ---- menu: pembaruan ---- */
+const vcmp = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number); for (let i = 0; i < 4; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; };
+async function checkUpdate(silent) {
+  try {
+    const t = await (await fetch('index.html?_=' + Date.now(), { cache: 'no-store' })).text();
+    const m = t.match(/APP_VERSION\s*=\s*'([^']+)'/);
+    if (!m) throw new Error('versi tidak terbaca');
+    S.upd = { remote: m[1], at: Date.now() };
+    S.newer = vcmp(m[1], APP_VERSION) > 0;
+    if (silent) { if (S.newer) toast('Versi baru tersedia: v' + m[1] + ' (menu Pembaruan)'); }
+    else toast(S.newer ? 'Ada versi baru v' + m[1] : 'Sudah versi terbaru');
+  } catch (e) { if (!silent) toast('Gagal cek: ' + e.message); }
+  if (S.cfg) render();
+}
+async function applyUpdate() {
+  toast('Memperbarui…');
+  try {
+    if ('serviceWorker' in navigator) await Promise.all((await navigator.serviceWorker.getRegistrations()).map(r => r.unregister()));
+    if (window.caches) await Promise.all((await caches.keys()).map(k => caches.delete(k)));
+  } catch (e) { /* lanjut muat ulang */ }
+  setTimeout(() => location.replace(location.pathname + '?u=' + Date.now()), 600);
+}
+function vUpd() {
+  const bv = S.d && S.d.version, rem = S.upd && S.upd.remote, bOld = !bv || vcmp(bv, MIN_BACKEND) < 0;
+  const line = (a, b, c, cls) => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', {}, a), H('span', { class: 'mu' }, b)), H('div', { class: 'r' }, H('b', { class: cls || '' }, c)));
+  return H('div', {},
+    H('div', { class: 'card' }, H('h2', {}, 'Versi'),
+      line('Aplikasi (PWA)', 'terpasang di perangkat ini', 'v' + APP_VERSION),
+      line('Backend (Apps Script)', 'deployment yang aktif', bv ? 'v' + bv : 'lama / tidak diketahui', bOld ? 'dn' : ''),
+      line('Terbaru di server', S.upd ? 'dicek ' + ago(S.upd.at) : 'belum dicek', rem ? 'v' + rem : '-', S.newer ? 'up' : '')),
+    bOld ? H('div', { class: 'card' }, H('b', { class: 'dn' }, 'Backend belum diperbarui'), H('p', { class: 'mu', style: 'margin-top:6px' }, 'Tempel Code.gs terbaru di Apps Script, jalankan setup(), lalu Deploy → Manage deployments → Edit → New version.')) : null,
+    H('div', { class: 'card' },
+      H('div', { class: 'btns' }, H('button', { class: 'btn sec', onclick: () => checkUpdate(false) }, 'Periksa pembaruan'), H('button', { class: 'btn', onclick: applyUpdate }, S.newer ? 'Perbarui ke v' + rem : 'Paksa muat ulang')),
+      H('p', { class: 'mu', style: 'margin-top:10px' }, 'Hanya menghapus cache aplikasi. URL, token, dan PIN tetap tersimpan.')),
+    H('div', { class: 'card' }, H('h2', {}, 'Riwayat versi'), CHANGES.map(([v, n]) => H('div', { class: 'row' }, H('b', {}, 'v' + v), H('span', { class: 'mu', style: 'white-space:normal' }, n)))));
+}
+
 /* ---- menu 5: pengaturan ---- */
 function vSet() {
   const locked = !!localStorage.getItem('cfg.enc');
   const pin = H('input', { type: 'password', placeholder: 'PIN baru (min. 4 karakter)', autocomplete: 'new-password' });
   return H('div', {},
     H('div', { class: 'card' }, H('h2', {}, 'Koneksi'),
+      H('p', { class: 'mu', style: 'margin-bottom:6px' }, 'Versi: PWA v' + APP_VERSION + ' · Backend ' + (S.d && S.d.version ? 'v' + S.d.version : 'tidak diketahui')),
       H('p', { class: 'mu', style: 'margin-bottom:10px' }, 'Server: ' + new URL(S.cfg.url).host + ' · data tersimpan hanya di perangkat ini' + (locked ? ' (dienkripsi PIN)' : ' (tanpa PIN)')),
       H('div', { class: 'btns' },
         H('button', { class: 'btn sec', onclick: () => { ['cfg', 'cfg.enc', 'pf'].forEach(k => localStorage.removeItem(k)); S.cfg = null; S.d = null; render(); } }, 'Ganti URL / token'),
@@ -269,7 +320,7 @@ function vSet() {
 }
 
 /* ---- gerbang: setup & buka kunci ---- */
-function gate(title, sub, form) { $('#nav').hidden = true; $('#app').replaceChildren(H('div', { class: 'gate' }, H('div', { class: 'card' }, H('h1', {}, title), H('p', { class: 'mu', style: 'margin-bottom:14px' }, sub), form))); }
+function gate(title, sub, form) { $('#nav').hidden = true; $('#app').replaceChildren(H('div', { class: 'gate' }, H('div', { class: 'card' }, H('h1', {}, title), H('p', { class: 'mu', style: 'margin-bottom:14px' }, sub), form, H('p', { class: 'mu', style: 'margin-top:14px;font-size:11px' }, 'v' + APP_VERSION)))); }
 function setup() {
   gate('Coin Tracker', 'Masukkan URL web app Apps Script dan APP_TOKEN. Keduanya hanya disimpan di perangkat ini, tidak ada di kode.', H('form', { onsubmit: async e => {
     e.preventDefault();
@@ -295,8 +346,8 @@ function unlock(blob) {
 function render() {
   if (!S.cfg) return boot();
   $('#nav').hidden = false;
-  $('#app').replaceChildren({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, set: vSet }[S.tab]());
-  $('#nav').replaceChildren(...TABS.map(([k, l, ic]) => H('button', { class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; render(); scrollTo(0, 0); } }, icon(ic), l)));
+  $('#app').replaceChildren({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, upd: vUpd, set: vSet }[S.tab]());
+  $('#nav').replaceChildren(...TABS.map(([k, l, ic]) => H('button', { class: S.tab === k ? 'on' : '', onclick: () => { S.tab = k; render(); scrollTo(0, 0); } }, icon(ic), l, k === 'upd' && S.newer ? H('i', { class: 'pip' }) : null)));
 }
 function start() {
   const c = localStorage.getItem('pf');
@@ -310,7 +361,9 @@ function boot() {
   setup();
 }
 boot();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js?v=' + APP_VERSION);
+checkUpdate(true);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && (!S.upd || Date.now() - S.upd.at > 9e5)) checkUpdate(true); });
 </script>
 </body>
 </html>
