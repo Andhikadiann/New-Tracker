@@ -61,6 +61,9 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 .sh h3{font-size:16px;margin-bottom:8px}.grab{width:36px;height:4px;border-radius:2px;background:var(--ln);margin:0 auto 10px}
 .mdl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(100% - 28px);max-width:420px;max-height:80vh;overflow:auto;background:var(--s1);border:1px solid var(--ln);border-radius:22px;padding:16px 16px 18px;box-shadow:0 24px 70px rgba(0,0,0,.7)}
 .mdl h3{font-size:17px;margin:0 30px 8px 0}.mdl .x{position:absolute;top:10px;right:10px;width:30px;height:30px;border:0;border-radius:50%;background:var(--s2);color:var(--mu);cursor:pointer;font-size:14px}
+.pb{height:6px;border-radius:3px;background:var(--s2);overflow:hidden;margin:6px 0}.pb i{display:block;height:100%}
+a{color:var(--ac)}
+.chip svg.i{width:16px;height:16px;vertical-align:middle}
 .toast{position:fixed;left:50%;bottom:130px;transform:translateX(-50%);background:var(--s2);border:1px solid var(--ln);padding:9px 14px;border-radius:12px;font-size:13px;max-width:90vw;z-index:30}
 .gate{min-height:80vh;display:grid;place-items:center;padding:12px}.gate .card{width:100%;max-width:400px;padding:18px}
 .gate h1{font-size:20px;margin-bottom:6px}
@@ -72,8 +75,10 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stro
 <div id="fabw"></div>
 <nav id="nav" hidden></nav>
 <script>
-const APP_VERSION = '1.8.0', MIN_BACKEND = '1.8.0', BUILD = '2026-11-24';
+const APP_VERSION = '1.10.0', MIN_BACKEND = '1.10.0', BUILD = '2026-11-24';
 const CHANGES = [
+  ['1.10.0', 'Salin semua log, Robinhood Chain, Aset per jaringan, alamat wallet di posisi, rentang 1 tahun, Posisi & PnL dihapus.'],
+  ['1.9.0', 'Indodax Trade API v2, daftar aset per wallet, posisi manual (staking), impor CSV, halaman kuota & limit API.'],
   ['1.8.0', 'Harga v2 (MEXC ticker, DexScreener dengan filter likuiditas), naik/turun 24 jam, rincian jadi kartu tengah, perbaikan panel [object HTMLDivElement].'],
   ['1.7.0', 'UI baru: nav 4 tab, panel bawah, Aset digabung, Transaksi 3 sub-tab, Wallet per kategori, tema hitam; transaksi Solana.'],
   ['1.6.0', 'Tandai spam, tampilan potret, Pembaruan di Pengaturan.'],
@@ -110,9 +115,9 @@ const TABS = [
   ['wal', 'Wallet', '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>'],
 ];
 const TITLES = { sum: 'Ringkasan', ast: 'Aset', trx: 'Transaksi', wal: 'Wallet', set: 'Pengaturan' };
-const PAGES = { kon: 'Koneksi & keamanan', upd: 'Pembaruan', spam: 'Spam & disembunyikan', log: 'Log server', ttg: 'Tentang' };
+const PAGES = { kon: 'Koneksi & keamanan', upd: 'Pembaruan', spam: 'Spam & disembunyikan', log: 'Log server', ttg: 'Tentang', quota: 'Kuota & limit API' };
 const TY = [['buy', 'Beli'], ['sell', 'Jual'], ['in', 'Masuk'], ['out', 'Keluar'], ['move', 'Pindah internal']], TL = Object.fromEntries(TY);
-const S = { tab: 'sum', page: '', sub: { trx: 'hist', wal: 'all' }, cfg: null, d: null, logs: null, ign: null, upd: null, newer: false, q: '', cf: '', tq: '', tf: '', all: false, sp: false, hd: false, range: 30, hid: JSON.parse(localStorage.getItem('hid') || '[]') };
+const S = { gm: 'asset', wf: '', quota: null, tab: 'sum', page: '', sub: { trx: 'hist', wal: 'all' }, cfg: null, d: null, logs: null, ign: null, upd: null, newer: false, q: '', cf: '', tq: '', tf: '', all: false, sp: false, hd: false, range: 30, hid: JSON.parse(localStorage.getItem('hid') || '[]') };
 
 /* ---- kripto: URL + token hanya di perangkat; PIN opsional (PBKDF2 -> AES-GCM) ---- */
 const b64 = u => btoa(String.fromCharCode(...new Uint8Array(u)));
@@ -218,7 +223,7 @@ function vSum() {
   return H('div', {},
     H('div', { class: 'card hero' }, H('div', { class: 'mu' }, 'Total portofolio'), H('div', { class: 'big' }, usd(p.total_usd)), H('div', { class: 'mu' }, p.idr_rate ? idr(p.total_idr) : ''),
       H('div', { class: 'stats' }, stat('24 jam', p.change && p.change.d1), stat('7 hari', p.change && p.change.d7)),
-      H('div', { class: 'chips' }, [[7, '7H'], [30, '30H'], [90, '90H'], [0, 'Semua']].map(x => H('button', { class: 'chip' + (S.range === x[0] ? ' on' : ''), onclick: () => { S.range = x[0]; render(); } }, x[1]))), chart(pts)),
+      H('div', { class: 'chips' }, [[7, '7H'], [30, '30H'], [90, '90H'], [365, '1T'], [0, 'Semua']].map(x => H('button', { class: 'chip' + (S.range === x[0] ? ' on' : ''), onclick: () => { S.range = x[0]; render(); } }, x[1]))), chart(pts)),
     H('div', { class: 'card' }, H('h2', {}, 'Alokasi jaringan', H('span', { class: 'mu', style: 'text-transform:none' }, 'ketuk untuk menyaring')),
       H('div', { class: 'dwrap' }, donut(segs, tot), H('div', { class: 'dc' }, H('b', {}, p.by_chain.length), H('span', { class: 'mu' }, 'jaringan'))),
       segs.map((c, i) => { const r = H('div', { class: 'row' }, H('div', { class: 'g' }, H('span', { class: 'dot', style: 'background:' + COL[i % 8] }), c.key.toUpperCase()), H('div', { class: 'r' }, usd(c.usd), H('span', { class: 'mu' }, ' ' + (c.usd / tot * 100).toFixed(1) + '%'))); return c.key === 'lainnya' ? r : tap(r, () => { S.cf = c.key; go('ast'); }); })),
@@ -229,22 +234,45 @@ function vSum() {
 }
 
 /* ---- 2. aset (digabung per simbol) ---- */
-function groups(p) {
-  const q = S.q.toLowerCase(), m = {};
-  p.holdings.forEach(h => {
-    if (S.cf && h.chain !== S.cf) return;
-    const key = String(h.symbol).toUpperCase() + (h.priced ? '' : '~'), hid = S.hid.includes(key);
-    if (!(hid ? S.hd : (h.priced || (h.spam ? S.sp : S.all)))) return;
-    if (q && !(h.symbol + ' ' + h.name + ' ' + h.chain + ' ' + h.wallet).toLowerCase().includes(q)) return;
-    const g = m[key] || (m[key] = { key, symbol: h.symbol, name: h.name, usd: 0, amt: 0, items: [], priced: h.priced });
-    g.usd += h.usd; g.amt += h.amount; g.items.push(h);
-    if (h.chg != null && h.usd > 0) { g.cw = (g.cw || 0) + h.usd * h.chg; g.cv = (g.cv || 0) + h.usd; }
+const gkey = x => String(x.symbol).toUpperCase() + (x.priced ? '' : '~');
+function visible(p) {
+  const q = S.q.toLowerCase();
+  return p.holdings.filter(x => {
+    if (S.cf && x.chain !== S.cf) return false;
+    if (S.wf && x.wallet !== S.wf) return false;
+    const hid = S.hid.includes(gkey(x));
+    if (!(hid ? S.hd : (x.priced || (x.spam ? S.sp : S.all)))) return false;
+    return !q || (x.symbol + ' ' + x.name + ' ' + x.chain + ' ' + x.wallet).toLowerCase().includes(q);
   });
-  return Object.values(m).map(g => { g.chg = g.cv > 0 ? g.cw / g.cv : null; return g; }).sort((a, b) => b.usd - a.usd);
+}
+function mkGroup(items) {
+  const f = items[0], g = { key: gkey(f), symbol: f.symbol, name: f.name, usd: 0, amt: 0, items, priced: f.priced, cw: 0, cv: 0 };
+  items.forEach(x => { g.usd += x.usd; g.amt += x.amount; if (x.chg != null && x.usd > 0) { g.cw += x.usd * x.chg; g.cv += x.usd; } });
+  g.chg = g.cv > 0 ? g.cw / g.cv : null;
+  return g;
+}
+function groups(p) {
+  const m = {};
+  visible(p).forEach(x => { (m[gkey(x)] = m[gkey(x)] || []).push(x); });
+  return Object.values(m).map(mkGroup).sort((a, b) => b.usd - a.usd);
+}
+function chainGroups(p) {
+  const m = {};
+  visible(p).forEach(x => { (m[x.chain] = m[x.chain] || []).push(x); });
+  return Object.keys(m).map(c => {
+    const by = {};
+    m[c].forEach(x => { (by[gkey(x)] = by[gkey(x)] || []).push(x); });
+    const rows = Object.values(by).map(mkGroup).sort((a, b) => b.usd - a.usd);
+    return { chain: c, usd: rows.reduce((a, g) => a + g.usd, 0), rows };
+  }).sort((a, b) => b.usd - a.usd);
 }
 function toggleHide(key) {
   S.hid = S.hid.includes(key) ? S.hid.filter(x => x !== key) : S.hid.concat(key);
   localStorage.setItem('hid', JSON.stringify(S.hid)); closeSheet(); render();
+}
+function posInfo(x) {
+  const w = S.d.wallets.find(v => v.label === x.wallet), c = w ? cat(w) : 'net';
+  return { title: x.wallet + (w && w.address ? ' (' + short(w.address) + ')' : ''), sub: [CATN[c], x.chain !== 'exchange' && x.chain !== 'manual' ? x.chain : null, x.contract ? short(x.contract) : null].filter(Boolean).join(' · ') };
 }
 function assetSheet(g) {
   const px = g.items.find(x => x.price != null);
@@ -258,33 +286,44 @@ function assetSheet(g) {
       H('div', { class: 'card' }, H('div', { class: 'mu' }, 'Harga'), H('b', {}, px ? usd(px.price) : '–'))),
     H('h2', {}, 'Posisi'),
     g.items.map(x => H('div', { class: 'row' },
-      H('div', { class: 'g' }, H('b', {}, x.wallet), H('span', { class: 'mu' }, x.chain + (x.contract ? ' · ' + short(x.contract) : ''))),
+      H('div', { class: 'g' }, H('b', {}, posInfo(x).title), H('span', { class: 'mu', style: 'white-space:normal' }, posInfo(x).sub)),
       H('div', { class: 'r' }, H('b', {}, x.priced ? usd(x.usd) : '–'), H('span', { class: 'mu' }, qty(x.amount))),
       x.contract ? H('button', { class: 'chip', onclick: () => confirm('Tandai ' + x.symbol + ' (' + x.chain + ') sebagai spam?') && (closeSheet(), run(() => api('ignoreAdd', { contract: x.contract, symbol: x.symbol, chain: x.chain }), 'Ditandai spam')) }, 'Spam') : null)),
     H('div', { class: 'btns', style: 'margin-top:12px' },
       H('button', { class: 'btn sec', onclick: () => { closeSheet(); S.tq = g.symbol; S.sub.trx = 'hist'; go('trx'); } }, 'Lihat transaksi'),
       H('button', { class: 'btn sec', onclick: () => toggleHide(g.key) }, S.hid.includes(g.key) ? 'Tampilkan lagi' : 'Sembunyikan')));
 }
+function assetRow(g, sub) {
+  const r = tap(row(g.symbol, sub, g.priced ? usd(g.usd) : '–', qty(g.amt)), () => assetSheet(g));
+  if (S.hid.includes(g.key)) r.style.opacity = '.5';
+  if (g.chg != null) r.querySelector('.r .mu').append(H('span', { class: g.chg >= 0 ? 'up' : 'dn' }, ' · ' + pct(g.chg)));
+  return r;
+}
 function vAst() {
   const p = S.d && S.d.portfolio; if (!p) return load0();
-  const box = H('div', { class: 'card' }), bar = H('div', { class: 'chips', style: 'flex-wrap:wrap;margin-top:8px' });
+  const bar = H('div', { class: 'chips', style: 'flex-wrap:wrap;margin-top:8px' }), box = H('div', {});
   const fill = () => {
-    const gs = groups(p);
     put(bar,
       S.cf ? H('button', { class: 'chip on', onclick: () => { S.cf = ''; fill(); } }, S.cf.toUpperCase() + ' ✕') : null,
+      S.wf ? H('button', { class: 'chip on', onclick: () => { S.wf = ''; fill(); } }, S.wf + ' ✕') : null,
       H('button', { class: 'chip' + (S.all ? ' on' : ''), onclick: () => { S.all = !S.all; fill(); } }, 'Tanpa harga ' + (p.unpriced || 0)),
       H('button', { class: 'chip' + (S.sp ? ' on' : ''), onclick: () => { S.sp = !S.sp; fill(); } }, 'Spam ' + (p.spam || 0)),
       S.hid.length ? H('button', { class: 'chip' + (S.hd ? ' on' : ''), onclick: () => { S.hd = !S.hd; fill(); } }, 'Disembunyikan ' + S.hid.length) : null);
-    put(box, H('h2', {}, 'Aset', H('span', { class: 'mu', style: 'text-transform:none' }, gs.length + ' aset')),
-      gs.length ? gs.map(g => {
-        const r = tap(row(g.symbol, g.items.length + ' posisi · ' + [...new Set(g.items.map(i => i.chain))].join(', '), g.priced ? usd(g.usd) : '–', qty(g.amt)), () => assetSheet(g));
-        if (S.hid.includes(g.key)) r.style.opacity = '.5';
-        if (g.chg != null) r.querySelector('.r .mu').append(H('span', { class: g.chg >= 0 ? 'up' : 'dn' }, ' · ' + pct(g.chg)));
-        return r;
-      }) : H('p', { class: 'mu' }, 'Tidak ada aset.'));
+    if (S.gm === 'chain') {
+      const cg = chainGroups(p);
+      put(box, cg.length ? cg.map(c => H('div', { class: 'card' },
+        H('h2', {}, c.chain.toUpperCase() + ' · ' + c.rows.length + ' aset', H('span', { style: 'text-transform:none;color:var(--tx)' }, usd(c.usd))),
+        c.rows.map(g => assetRow(g, g.items.length + ' posisi · ' + [...new Set(g.items.map(i => i.wallet))].join(', '))))) : H('div', { class: 'card mu' }, 'Tidak ada aset.'));
+    } else {
+      const gs = groups(p);
+      put(box, H('div', { class: 'card' }, H('h2', {}, 'Aset', H('span', { class: 'mu', style: 'text-transform:none' }, gs.length + ' aset')),
+        gs.length ? gs.map(g => assetRow(g, g.items.length + ' posisi · ' + [...new Set(g.items.map(i => i.chain))].join(', '))) : H('p', { class: 'mu' }, 'Tidak ada aset.')));
+    }
   };
   fill();
-  return H('div', {}, H('div', { class: 'card' }, H('input', { placeholder: 'Cari simbol, nama, jaringan, wallet…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), bar), box);
+  return H('div', {},
+    H('div', { class: 'card' }, seg([['asset', 'Per aset'], ['chain', 'Per jaringan']], S.gm, k => { S.gm = k; render(); }),
+      H('input', { placeholder: 'Cari simbol, nama, jaringan, wallet…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), bar), box);
 }
 
 /* ---- 3. transaksi ---- */
@@ -316,13 +355,7 @@ function txRow(t) {
 function vTrx() {
   if (!S.d) return load0();
   const all = S.d.transactions, rev = all.filter(t => (t.type === 'in' || t.type === 'out') && t.source && t.source !== 'manual'), sub = S.sub.trx;
-  const head = seg([['hist', 'Riwayat'], ['pnl', 'Posisi & PnL'], ['rev', 'Ditinjau ' + rev.length]], sub, k => { S.sub.trx = k; render(); });
-  if (sub === 'pnl') {
-    const pn = S.d.pnl, re = pn.reduce((a, x) => a + x.realized, 0), un = pn.reduce((a, x) => a + x.unrealized, 0);
-    return H('div', {}, head,
-      H('div', { class: 'grid2' }, H('div', { class: 'card' }, H('div', { class: 'mu' }, 'Realized'), H('b', { class: re >= 0 ? 'up' : 'dn', style: 'font-size:18px' }, usd(re))), H('div', { class: 'card' }, H('div', { class: 'mu' }, 'Unrealized'), H('b', { class: un >= 0 ? 'up' : 'dn', style: 'font-size:18px' }, usd(un)))),
-      H('div', { class: 'card' }, H('h2', {}, 'Posisi (rata-rata biaya)'), pn.length ? pn.map(x => row(x.symbol, qty(x.qty) + ' @ ' + usd(x.avg_cost), usd(x.value), pct(x.roi) + ' · R ' + usd(x.realized), x.roi >= 0 ? 'up' : 'dn')) : H('p', { class: 'mu' }, 'Catat atau tinjau transaksi beli/jual untuk menghitung PnL.')));
-  }
+  const head = seg([['hist', 'Riwayat'], ['rev', 'Ditinjau ' + rev.length]], sub, k => { S.sub.trx = k; render(); });
   const list = (sub === 'rev' ? rev : all).filter(t => (!S.tf || t.type === S.tf) && (!S.tq || String(t.symbol).toUpperCase() === S.tq.toUpperCase()));
   const bar = H('div', { class: 'chips', style: 'flex-wrap:wrap;margin:0 0 6px' },
     sub === 'hist' ? [['', 'Semua']].concat(TY).map(x => H('button', { class: 'chip' + (S.tf === x[0] ? ' on' : ''), onclick: () => { S.tf = x[0]; render(); } }, x[1])) : null,
@@ -333,25 +366,193 @@ function vTrx() {
     if (d !== last) { rows.push(H('div', { class: 'dh' }, d)); last = d; }
     rows.push(txRow(t));
   });
-  return H('div', {}, head, sub === 'rev' ? H('p', { class: 'mu', style: 'margin-bottom:8px' }, 'Transfer otomatis yang belum diklasifikasi. Ketuk untuk mengubah menjadi Beli/Jual/Internal agar masuk PnL.') : null,
-    H('div', { class: 'card' }, bar, rows.length ? rows : H('p', { class: 'mu' }, 'Belum ada transaksi. Impor otomatis berjalan saat sync (EVM, Solana, MEXC).')));
+  return H('div', {}, head,
+    H('div', { class: 'btns', style: 'margin-bottom:10px' }, H('button', { class: 'btn sec', onclick: csvImport }, 'Impor CSV'), H('button', { class: 'btn sec', onclick: txForm }, '+ Manual')),
+    sub === 'rev' ? H('p', { class: 'mu', style: 'margin-bottom:8px' }, 'Transfer otomatis yang belum diklasifikasi. Ketuk untuk mengubah menjadi Beli/Jual/Internal agar masuk PnL.') : null,
+    H('div', { class: 'card' }, bar, rows.length ? rows : H('p', { class: 'mu' }, 'Belum ada transaksi. Impor otomatis berjalan saat sync (EVM, Solana, MEXC, Indodax); riwayat lain lewat Impor CSV.')));
+}
+
+/* ---- impor CSV: fungsi murni ---- */
+const FIELDS = [['date', 'Tanggal'], ['type', 'Tipe / side'], ['symbol', 'Simbol / pair'], ['qty', 'Jumlah'], ['price', 'Harga'], ['fee', 'Biaya'], ['id', 'ID (opsional)']];
+const SYN = {
+  date: ['date', 'time', 'waktu', 'tanggal', 'datetime', 'timestamp', 'created', 'order time', 'trade time'],
+  type: ['type', 'side', 'tipe', 'jenis', 'direction', 'action'],
+  symbol: ['symbol', 'pair', 'pairs', 'market', 'koin', 'coin', 'asset', 'currency', 'token'],
+  price: ['price', 'harga', 'filled price', 'avg price', 'rate'],
+  qty: ['qty', 'quantity', 'amount', 'jumlah', 'volume', 'executed', 'filled', 'size'],
+  fee: ['fee', 'fees', 'biaya', 'commission'],
+  id: ['id', 'trade id', 'tradeid', 'order id', 'orderid', 'hash', 'txid', 'tx hash'],
+};
+function parseCsv(t) {
+  t = String(t).replace(/^\uFEFF/, '');
+  const first = t.split(/\r?\n/)[0] || '', d = [',', ';', '\t'].map(x => [x, first.split(x).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const rows = []; let row = [], cur = '', q = false;
+  const end = () => { row.push(cur); cur = ''; if (row.some(x => x.trim() !== '')) rows.push(row); row = []; };
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === d) { row.push(cur); cur = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; end(); }
+    else cur += c;
+  }
+  if (cur !== '' || row.length) end();
+  return rows;
+}
+function toNum(s, style) {
+  let v = String(s == null ? '' : s).trim().replace(/[^\d.,-]/g, '');
+  if (!v || v === '-') return NaN;
+  if (style === 'dot') v = v.replace(/,/g, '');
+  else if (style === 'comma') v = v.replace(/\./g, '').replace(',', '.');
+  else {
+    const lc = v.lastIndexOf(','), ld = v.lastIndexOf('.');
+    if (lc >= 0 && ld >= 0) v = lc > ld ? v.replace(/\./g, '').replace(',', '.') : v.replace(/,/g, '');
+    else if (lc >= 0 || ld >= 0) {
+      const sep = lc >= 0 ? ',' : '.', parts = v.split(sep);
+      v = parts.length > 2 ? parts.join('') : parts[0] + '.' + parts[1];
+    }
+  }
+  return Number(v);
+}
+function toDate(s) {
+  s = String(s || '').trim();
+  if (!s) return null;
+  if (/^\d{13}$/.test(s)) return new Date(+s);
+  if (/^\d{10}$/.test(s)) return new Date(+s * 1000);
+  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+  const d = new Date(s.replace(' ', 'T'));
+  return isNaN(d) ? null : d;
+}
+function toType(s) {
+  const v = String(s || '').trim().toLowerCase();
+  if (/^(buy|beli|b|bid|long)$/.test(v) || v.includes('buy') || v.includes('beli')) return 'buy';
+  if (/^(sell|jual|s|ask)$/.test(v) || v.includes('sell') || v.includes('jual')) return 'sell';
+  if (/^(in|masuk|receive|received|terima)$/.test(v) || v.includes('deposit')) return 'in';
+  if (/^(out|keluar|send|sent|kirim)$/.test(v) || v.includes('withdraw')) return 'out';
+  return '';
+}
+function splitPair(s) {
+  const v = String(s || '').trim().toUpperCase().replace(/[\/_\-\s]/g, ''), m = v.match(/^(.+?)(USDT|USDC|IDR|USD|BTC|ETH)$/);
+  if (!m || !m[1] || (!/[\/_\-\s]/.test(String(s)) && /^(BTC|ETH)$/.test(m[2]))) return { base: v, quote: '' };
+  return { base: m[1], quote: m[2] };
+}
+function autoMap(head) {
+  const m = {}, names = head.map(c => String(c).trim().toLowerCase()), used = () => Object.values(m);
+  Object.keys(SYN).forEach(k => {
+    let i = names.findIndex((n, j) => SYN[k].includes(n) && !used().includes(j));
+    if (i < 0 && k !== 'id') i = names.findIndex((n, j) => SYN[k].some(x => n.includes(x)) && !used().includes(j));
+    if (i >= 0) m[k] = i;
+  });
+  return m;
+}
+function detectStyle(st) {
+  let dot = 0, com = 0;
+  [st.map.qty, st.map.price, st.map.fee].filter(i => i != null).forEach(i => st.rows.slice(0, 80).forEach(r => {
+    const v = String(r[i] == null ? '' : r[i]).trim().replace(/[^\d.,]/g, '');
+    if (!v) return;
+    const lc = v.lastIndexOf(','), ld = v.lastIndexOf('.');
+    if (lc >= 0 && ld >= 0) { if (lc > ld) com++; else dot++; return; }
+    const sep = lc >= 0 ? ',' : ld >= 0 ? '.' : '';
+    if (!sep) return;
+    const parts = v.split(sep);
+    if (parts.length > 2) { if (sep === '.') com++; else dot++; return; }
+    if (parts[1].length !== 3) { if (sep === ',') com++; else dot++; }
+  }));
+  return com > dot ? 'comma' : 'dot';
+}
+function csvConvert(st, o) {
+  const g = (r, k) => st.map[k] == null ? '' : r[st.map[k]];
+  const rate = (S.d && S.d.portfolio && S.d.portfolio.idr_rate) || 0, ok = [], style = o.ns === 'auto' ? (st.style || 'dot') : o.ns;
+  let bad = 0, zero = 0;
+  st.rows.forEach(r => {
+    const d = toDate(g(r, 'date')), type = o.dtype || toType(g(r, 'type')), q = Math.abs(toNum(g(r, 'qty'), style));
+    let sym = String(g(r, 'symbol')).trim().toUpperCase(), cu = o.cur, px = toNum(g(r, 'price'), style), fee = toNum(g(r, 'fee'), style), quote = '';
+    if (o.pair) { const p = splitPair(sym); sym = p.base; quote = p.quote; if (quote === 'IDR') cu = 'IDR'; else if (quote) cu = 'USD'; }
+    if (isNaN(px)) px = 0;
+    if (isNaN(fee)) fee = 0;
+    if (quote === 'BTC' || quote === 'ETH') { px = 0; fee = 0; }
+    if (cu === 'IDR') { if (!rate) { bad++; return; } px /= rate; fee /= rate; }
+    if (!d || !type || !sym || sym.length > 15 || !(q > 0)) { bad++; return; }
+    if (!(px > 0) && (type === 'buy' || type === 'sell')) zero++;
+    ok.push({ date: d.toISOString(), type, symbol: sym, qty: q, price: px, fee: Math.abs(fee), id: String(g(r, 'id')).trim(), note: 'csv' });
+  });
+  return { ok, bad, zero };
+}
+/* ---- impor CSV: tampilan ---- */
+function csvImport() {
+  const st = { head: [], rows: [], map: {} };
+  const sel = (opts, v) => H('select', {}, opts.map(x => H('option', { value: x[0], selected: x[0] === v }, x[1])));
+  const wal = H('input', { placeholder: 'Wallet / exchange tujuan, mis. MEXC', list: 'wl2' });
+  const ns = sel([['auto', 'Angka: deteksi otomatis'], ['dot', 'Angka: 1,234.56'], ['comma', 'Angka: 1.234,56']], 'auto');
+  const cur = sel([['USD', 'Harga dalam USD'], ['IDR', 'Harga dalam IDR']], 'USD');
+  const dt = sel([['', 'Tipe diambil dari kolom'], ['buy', 'Semua baris = Beli'], ['sell', 'Semua baris = Jual'], ['in', 'Semua baris = Masuk'], ['out', 'Semua baris = Keluar']], '');
+  const pr = H('input', { type: 'checkbox', style: 'width:auto;margin:0 6px 0 0' }), map = H('div', {}), out = H('div', { style: 'margin:8px 0' });
+  const btn = H('button', { class: 'btn', style: 'width:100%', disabled: '' }, 'Impor');
+  const opts = () => ({ ns: ns.value, cur: cur.value, dtype: dt.value, pair: pr.checked });
+  const redraw = () => {
+    const r = csvConvert(st, opts());
+    put(out, H('p', { class: 'mu' }, r.ok.length + ' baris valid · ' + r.bad + ' dilewati' + (r.zero ? ' · ' + r.zero + ' beli/jual tanpa harga' : '')),
+      r.ok.slice(0, 3).map(x => H('div', { class: 'mu' }, x.date.slice(0, 10) + ' · ' + x.type + ' ' + x.symbol + ' ' + qty(x.qty) + ' @ ' + usd(x.price))));
+    btn.disabled = !r.ok.length;
+  };
+  [ns, cur, dt, pr].forEach(e => { e.onchange = redraw; });
+  const drawMap = () => put(map, FIELDS.map(f => H('div', { style: 'display:flex;gap:8px;align-items:center' }, H('span', { class: 'mu', style: 'width:96px;flex:none' }, f[1]),
+    H('select', { onchange: e => { st.map[f[0]] = e.target.value === '' ? null : +e.target.value; st.style = detectStyle(st); redraw(); } },
+      [H('option', { value: '' }, '— tidak ada —')].concat(st.head.map((x, i) => H('option', { value: i, selected: st.map[f[0]] === i }, x)))))));
+  const file = H('input', { type: 'file', accept: '.csv,.txt,text/csv', onchange: async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = parseCsv(await f.text());
+    if (r.length < 2) return toast('File kosong atau format tidak dikenali');
+    st.head = r[0]; st.rows = r.slice(1); st.map = autoMap(r[0]); st.style = detectStyle(st);
+    const si = st.map.symbol;
+    pr.checked = si != null && st.rows.slice(0, 20).filter(x => /^[A-Za-z0-9]+[\/_\-]?(IDR|USDT|USDC|USD)$/i.test(String(x[si]).trim())).length > Math.min(st.rows.length, 20) / 2;
+    drawMap(); redraw();
+  } });
+  btn.onclick = async () => {
+    const label = wal.value.trim(); if (!label) return toast('Isi wallet tujuan');
+    const r = csvConvert(st, opts()); let added = 0, dup = 0;
+    closeSheet(); toast('Mengimpor ' + r.ok.length + ' baris…');
+    try {
+      for (let i = 0; i < r.ok.length; i += 300) { const x = await api('importCsv', { wallet: label, rows: r.ok.slice(i, i + 300) }); added += x.added; dup += x.duplicates; }
+      toast(added + ' ditambah, ' + dup + ' duplikat');
+    } catch (e) { toast(e.message); }
+    load();
+  };
+  const tpl = () => { const a = H('a', { href: URL.createObjectURL(new Blob(['date,type,symbol,qty,price,fee,id,note\n2026-11-01 10:00:00,buy,BTC,0.01,90000,0.5,,contoh\n'], { type: 'text/csv' })), download: 'templat-transaksi.csv' }); a.click(); };
+  sheet('Impor CSV transaksi',
+    H('p', { class: 'mu', style: 'margin-bottom:8px' }, 'Untuk riwayat dari exchange (MEXC, Indodax) atau jaringan yang tidak menyediakan nilai transaksi. Tanggal dd/mm/yyyy diasumsikan hari-bulan-tahun. ', H('a', { href: '#', onclick: e => { e.preventDefault(); tpl(); } }, 'Unduh templat')),
+    file, wal, H('datalist', { id: 'wl2' }, S.d.wallets.map(w => H('option', { value: w.label }))), map, ns, cur, dt,
+    H('label', { class: 'mu', style: 'display:flex;align-items:center;margin-bottom:8px' }, pr, 'Kolom simbol berisi pasangan (BTCIDR, BTC/USDT)'), out, btn);
 }
 
 /* ---- 4. wallet (per kategori) ---- */
-const cat = w => /^(mexc|indodax)$/i.test(w.chain) ? 'ex' : (/^evm$/i.test(w.chain) || /^0x[0-9a-fA-F]{40}$/.test(w.address || '')) ? 'evm' : 'net';
-const CATN = { evm: 'EVM', net: 'Jaringan lain', ex: 'Exchange' };
+const cat = w => /^manual$/i.test(w.chain) ? 'man' : /^(mexc|indodax)$/i.test(w.chain) ? 'ex' : (/^evm$/i.test(w.chain) || /^0x[0-9a-fA-F]{40}$/.test(w.address || '')) ? 'evm' : 'net';
+const CATN = { evm: 'EVM', net: 'Jaringan lain', ex: 'Exchange', man: 'Manual' };
 function walSheet(w) {
+  const hs = S.d.portfolio.holdings.filter(x => x.wallet === w.label).sort((a, b) => b.usd - a.usd), man = cat(w) === 'man';
+  const sym = H('input', { placeholder: 'Simbol, mis. SUI' }), amt = H('input', { type: 'number', step: 'any', min: '0', placeholder: 'Jumlah' });
   modal(w.label,
     kv('Jaringan', w.chain || 'otomatis'), kv('Alamat', w.address ? short(w.address) : '—'), kv('Sinkron', w.last_sync ? ago(w.last_sync) : 'belum'), kv('Status', String(w.status || '-')),
+    H('h2', { style: 'margin-top:12px' }, 'Aset di sini', H('span', { class: 'mu', style: 'text-transform:none' }, hs.length + ' aset')),
+    hs.length ? hs.slice(0, 40).map(x => H('div', { class: 'row' },
+      H('div', { class: 'g' }, H('b', {}, x.symbol || '?'), H('span', { class: 'mu' }, x.chain)),
+      H('div', { class: 'r' }, H('b', {}, x.priced ? usd(x.usd) : '–'), H('span', { class: 'mu' }, qty(x.amount))),
+      man ? H('button', { class: 'chip', onclick: () => confirm('Hapus posisi ' + x.symbol + '?') && (closeSheet(), run(() => api('manualDel', { wallet: w.label, symbol: x.symbol }), 'Dihapus')) }, '✕') : null)) : H('p', { class: 'mu' }, 'Belum ada aset terbaca. Coba Sync.'),
+    man ? H('div', { style: 'margin-top:10px' }, sym, amt, H('button', { class: 'btn', style: 'width:100%', onclick: () => {
+      if (!sym.value.trim() || !(Number(amt.value) > 0)) return toast('Isi simbol dan jumlah');
+      const o = { wallet: w.label, symbol: sym.value.trim(), amount: amt.value }; closeSheet(); run(() => api('manualSet', o), 'Posisi disimpan');
+    } }, 'Simpan posisi')) : null,
     H('div', { class: 'btns', style: 'margin-top:12px' },
+      hs.length ? H('button', { class: 'btn sec', onclick: () => { closeSheet(); S.wf = w.label; go('ast'); } }, 'Lihat di Aset') : null,
       w.address ? H('button', { class: 'btn sec', onclick: () => { if (navigator.clipboard) navigator.clipboard.writeText(w.address); toast('Alamat disalin'); } }, 'Salin alamat') : null,
       H('button', { class: 'btn', onclick: () => { closeSheet(); run(() => api('sync', { label: w.label }), 'Sync selesai'); } }, 'Sync'),
       H('button', { class: 'btn del', onclick: () => confirm('Hapus ' + w.label + '?') && (closeSheet(), run(() => api('removeWallet', { label: w.label }), 'Dihapus')) }, 'Hapus')));
 }
 function walForm(k) {
-  const label = H('input', { placeholder: 'Label, mis. Metamask main' }), addr = H('input', { placeholder: 'Alamat wallet', autocomplete: 'off', hidden: k === 'ex' ? '' : null });
-  const opts = k === 'evm' ? [['evm', 'Semua jaringan EVM (otomatis)'], ['ronin', 'Ronin'], ['kaia', 'Kaia'], ['wemix', 'Wemix'], ['imx', 'Immutable']]
-    : k === 'net' ? [['', 'Otomatis dari alamat'], ['sol', 'Solana'], ['sui', 'Sui'], ['aptos', 'Aptos'], ['ton', 'TON'], ['btc', 'Bitcoin']] : [['mexc', 'MEXC'], ['indodax', 'Indodax']];
+  const label = H('input', { placeholder: 'Label, mis. Metamask main' }), addr = H('input', { placeholder: 'Alamat wallet', autocomplete: 'off', hidden: k === 'ex' || k === 'man' ? '' : null });
+  const opts = k === 'evm' ? [['evm', 'Semua jaringan EVM (otomatis)'], ['ronin', 'Ronin'], ['kaia', 'Kaia'], ['wemix', 'Wemix'], ['imx', 'Immutable'], ['robinhood', 'Robinhood Chain']]
+    : k === 'net' ? [['', 'Otomatis dari alamat'], ['sol', 'Solana'], ['sui', 'Sui'], ['aptos', 'Aptos'], ['ton', 'TON'], ['btc', 'Bitcoin']] : k === 'man' ? [['manual', 'Posisi manual']] : [['mexc', 'MEXC'], ['indodax', 'Indodax']];
   const ch = H('select', {}, opts.map(x => H('option', { value: x[0] }, x[1])));
   sheet('Tambah ' + CATN[k], label, ch, addr, k === 'ex' ? H('p', { class: 'mu', style: 'margin-bottom:8px' }, 'API key read-only disimpan di Script Properties, bukan di sini.') : null,
     H('button', { class: 'btn', style: 'width:100%', onclick: () => {
@@ -362,7 +563,7 @@ function walForm(k) {
 }
 function walAdd() {
   sheet('Tambah wallet', H('p', { class: 'mu', style: 'margin-bottom:6px' }, 'Pilih jenis. Token terdeteksi otomatis setelah ditambahkan.'),
-    [['evm', 'EVM', 'Metamask, OKX, Ronin, dll (alamat 0x…)'], ['net', 'Jaringan lain', 'Solana, Sui, Aptos, TON, Bitcoin'], ['ex', 'Exchange', 'MEXC, Indodax']]
+    [['evm', 'EVM', 'Metamask, OKX, Ronin, dll (alamat 0x…)'], ['net', 'Jaringan lain', 'Solana, Sui, Aptos, TON, Bitcoin'], ['ex', 'Exchange', 'MEXC, Indodax'], ['man', 'Manual', 'Staking dan posisi yang tidak terbaca API']]
       .map(x => tap(H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', {}, x[1]), H('span', { class: 'mu' }, x[2])), H('span', { class: 'mu' }, '›')), () => walForm(x[0]))));
 }
 function vWal() {
@@ -372,14 +573,14 @@ function vWal() {
   const mk = w => {
     const st = String(w.status || '');
     return tap(H('div', { class: 'row' }, H('span', { class: 'st ' + (st.startsWith('OK') ? 'ok' : st.startsWith('ERROR') ? 'er' : '') }),
-      H('div', { class: 'g' }, H('b', {}, w.label), H('span', { class: 'mu' }, cat(w) === 'ex' ? w.chain : short(w.address) + (w.chain ? ' · ' + w.chain : ''))),
+      H('div', { class: 'g' }, H('b', {}, w.label), H('span', { class: 'mu' }, cat(w) === 'ex' || cat(w) === 'man' ? w.chain : short(w.address) + (w.chain ? ' · ' + w.chain : ''))),
       H('div', { class: 'r' }, H('b', {}, usd(val[w.label] || 0))), H('span', { class: 'mu' }, '›')), () => walSheet(w));
   };
-  const gs = ['evm', 'net', 'ex'].filter(k => cur === 'all' || cur === k).map(k => {
+  const gs = ['evm', 'net', 'ex', 'man'].filter(k => cur === 'all' || cur === k).map(k => {
     const l = ws.filter(w => cat(w) === k);
     return l.length ? H('div', { class: 'card' }, H('h2', {}, CATN[k] + ' · ' + l.length, H('span', { class: 'mu', style: 'text-transform:none' }, usd(l.reduce((a, w) => a + (val[w.label] || 0), 0)))), l.map(mk)) : null;
   });
-  return H('div', {}, seg([['all', 'Semua'], ['evm', 'EVM ' + cnt('evm')], ['net', 'Jaringan ' + cnt('net')], ['ex', 'Exchange ' + cnt('ex')]], cur, k => { S.sub.wal = k; render(); }),
+  return H('div', {}, seg([['all', 'Semua'], ['evm', 'EVM ' + cnt('evm')], ['net', 'Jaringan ' + cnt('net')], ['ex', 'Exchange ' + cnt('ex')]].concat(cnt('man') ? [['man', 'Manual ' + cnt('man')]] : []), cur, k => { S.sub.wal = k; render(); }),
     gs, ws.length ? null : H('div', { class: 'card mu' }, 'Belum ada wallet. Ketuk + untuk menambah.'));
 }
 
@@ -407,7 +608,8 @@ async function applyUpdate() {
 }
 const loadIgn = async () => { try { S.ign = await api('ignoreList'); render(); } catch (e) { toast(e.message); } };
 const loadLogs = async () => { try { S.logs = await api('logs'); render(); } catch (e) { toast(e.message); } };
-function openPage(p) { S.page = p; if (p === 'log' && !S.logs) loadLogs(); if (p === 'spam' && !S.ign) loadIgn(); render(); scrollTo(0, 0); }
+const loadQuota = async () => { try { S.quota = await api('quota'); render(); } catch (e) { toast(e.message); } };
+function openPage(p) { S.page = p; if (p === 'log' && !S.logs) loadLogs(); if (p === 'spam' && !S.ign) loadIgn(); if (p === 'quota') loadQuota(); render(); scrollTo(0, 0); }
 
 function pUpd() {
   const bv = S.d && S.d.version, rem = S.upd && S.upd.remote, bOld = !bv || vcmp(bv, MIN_BACKEND) < 0;
@@ -441,25 +643,49 @@ function pSpam() {
     H('div', { class: 'card' }, H('h2', {}, 'Disembunyikan (perangkat ini)'),
       S.hid.length ? S.hid.map(k => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', {}, k.replace('~', '')), H('span', { class: 'mu' }, k.endsWith('~') ? 'tanpa harga' : 'berharga')), H('button', { class: 'chip', onclick: () => toggleHide(k) }, 'Tampilkan'))) : H('p', { class: 'mu' }, 'Tidak ada. Sembunyikan lewat panel aset.')));
 }
+function copyText(t) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  const a = H('textarea', { style: 'position:fixed;opacity:0' });
+  a.value = t; document.body.append(a); a.select();
+  try { document.execCommand('copy'); } finally { a.remove(); }
+  return Promise.resolve();
+}
+const copyLogs = async () => {
+  if (!S.logs || !S.logs.length) return toast('Belum ada log');
+  const t = S.logs.slice().reverse().map(l => new Date(l.time).toLocaleString('id-ID') + ' ' + l.level + ' ' + l.message).join('\n');
+  try { await copyText(t); toast(S.logs.length + ' log disalin'); } catch (e) { toast('Gagal menyalin'); }
+};
 function pLog() {
-  return H('div', { class: 'card' }, H('h2', {}, 'Log server', H('button', { class: 'chip', onclick: loadLogs }, 'Muat ulang')),
+  return H('div', { class: 'card' }, H('h2', {}, 'Log server', H('span', { style: 'display:flex;gap:6px' }, H('button', { class: 'chip', title: 'Salin semua log', 'aria-label': 'Salin semua log', onclick: copyLogs }, icon('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>')), H('button', { class: 'chip', onclick: loadLogs }, 'Muat ulang'))),
     S.logs ? S.logs.map(l => H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', { class: l.level === 'ERROR' ? 'dn' : '' }, l.level), H('span', { class: 'mu', style: 'white-space:normal' }, l.message)))) : H('p', { class: 'mu' }, 'Memuat…'));
 }
 function pTtg() {
   return H('div', { class: 'card' }, kv('Aplikasi', 'Coin Tracker v' + APP_VERSION), kv('Build', BUILD), kv('Backend', S.d && S.d.version ? 'v' + S.d.version : 'tidak diketahui'),
     kv('Penyimpanan', localStorage.getItem('cfg.enc') ? 'dienkripsi PIN' : 'tanpa PIN'), kv('Server', new URL(S.cfg.url).host));
 }
+function pQuota() {
+  const q = S.quota;
+  return H('div', {},
+    H('div', { class: 'card' }, H('h2', {}, 'Kuota & limit API', H('button', { class: 'chip', onclick: loadQuota }, 'Muat ulang')),
+      q ? q.items.map(x => H('div', { class: 'row', style: 'display:block' },
+        H('div', { style: 'display:flex;justify-content:space-between;gap:8px' }, H('b', {}, x.name), H('span', { class: 'mu' }, x.limit ? qty(x.used) + ' / ' + qty(x.limit) + ' ' + x.unit : x.used != null ? qty(x.used) + ' panggilan hari ini' : '–')),
+        x.limit ? H('div', { class: 'pb' }, H('i', { style: 'width:' + Math.min(100, x.used / x.limit * 100) + '%;background:' + (x.used / x.limit > .8 ? 'var(--dn)' : 'var(--ac)') })) : null,
+        H('span', { class: 'mu', style: 'white-space:normal;display:block' }, x.note || ''),
+        x.link && /^https:\/\//.test(x.link) ? H('a', { href: x.link, target: '_blank', rel: 'noopener' }, 'Buka dashboard') : null)) : H('p', { class: 'mu' }, 'Memuat…')),
+    q ? H('p', { class: 'mu', style: 'padding:0 4px' }, 'Hitungan panggilan berasal dari Apps Script ini (perkiraan). Hanya CoinGecko dan Blockscout yang melaporkan sisa kredit resmi.') : null);
+}
+
 function vSet() {
-  if (S.page) return { kon: pKon, upd: pUpd, spam: pSpam, log: pLog, ttg: pTtg }[S.page]();
+  if (S.page) return { kon: pKon, upd: pUpd, quota: pQuota, spam: pSpam, log: pLog, ttg: pTtg }[S.page]();
   const it = (p, t, d, pip) => tap(H('div', { class: 'row' }, H('div', { class: 'g' }, H('b', {}, t), H('span', { class: 'mu' }, d)), pip ? H('i', { class: 'pip2' }) : null, H('span', { class: 'mu' }, '›')), () => openPage(p));
   return H('div', { class: 'card' }, it('kon', 'Koneksi & keamanan', 'URL, token, PIN'), it('upd', 'Pembaruan', 'v' + APP_VERSION + (S.newer ? ' · versi baru tersedia' : ''), S.newer),
-    it('spam', 'Spam & disembunyikan', 'Kelola daftar'), it('log', 'Log server', '60 log terakhir'), it('ttg', 'Tentang', 'Versi dan build'));
+    it('quota', 'Kuota & limit API', 'Sisa kredit dan pemakaian'), it('spam', 'Spam & disembunyikan', 'Kelola daftar'), it('log', 'Log server', '150 log terakhir'), it('ttg', 'Tentang', 'Versi dan build'));
 }
 
 /* ---- kerangka, gerbang, boot ---- */
 function quick() {
   sheet('Aksi cepat',
-    [['Tambah wallet', walAdd], ['Tambah transaksi', txForm], ['Sync semua', () => { closeSheet(); run(() => api('sync'), 'Sync selesai'); }]]
+    [['Tambah wallet', walAdd], ['Tambah transaksi', txForm], ['Impor CSV transaksi', csvImport], ['Sync semua', () => { closeSheet(); run(() => api('sync'), 'Sync selesai'); }]]
       .map(x => tap(H('div', { class: 'row' }, H('b', {}, x[0]), H('span', { class: 'mu', style: 'margin-left:auto' }, '›')), x[1])));
 }
 const fabGo = () => (S.tab === 'trx' ? txForm : S.tab === 'wal' ? walAdd : quick)();
@@ -473,7 +699,7 @@ function render() {
     H('button', { class: 'ib', onclick: () => run(() => api('sync'), 'Sync selesai') }, '↻'),
     H('button', { class: 'ib', onclick: () => go('set') }, '⚙', S.newer ? H('i', { class: 'pip' }) : null));
   put($('#app'), ({ sum: vSum, ast: vAst, trx: vTrx, wal: vWal, set: vSet })[S.tab]());
-  put($('#nav'), TABS.map(x => H('button', { class: S.tab === x[0] ? 'on' : '', onclick: () => { S.cf = ''; S.q = ''; S.tq = ''; go(x[0]); } }, icon(x[2]), x[1])));
+  put($('#nav'), TABS.map(x => H('button', { class: S.tab === x[0] ? 'on' : '', onclick: () => { S.cf = ''; S.wf = ''; S.q = ''; S.tq = ''; go(x[0]); } }, icon(x[2]), x[1])));
   put($('#fabw'), S.tab === 'set' ? null : H('button', { id: 'fab', onclick: fabGo }, '+'));
 }
 function gate(title, sub, form) {
