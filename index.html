@@ -29,7 +29,17 @@ h2{font-size:11px;font-weight:600;color:var(--mu);letter-spacing:.07em;text-tran
 .r{text-align:right}.r b{display:block;font-weight:600}
 .av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#000;flex:none}
 .stats{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:10px}
-.warn{color:#fbbf24}.stats b{display:block;font-size:13px}
+.warn{color:#fbbf24}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hmain{display:grid;grid-template-columns:1.25fr 1fr;gap:12px;align-items:end;margin-top:6px}
+.hside{display:grid;gap:6px;text-align:right}.hside b{display:block;font-size:15px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.st3{background:rgba(255,255,255,.04);border-radius:12px;padding:8px 10px;min-width:0}.st3 b{display:block;font-size:13px;overflow-wrap:anywhere}
+.chip.sm{padding:3px 10px;font-size:12px}
+.stick{position:sticky;top:var(--hdh,56px);z-index:4;background:var(--bg);margin:0 -12px 8px;padding:2px 12px 6px}
+.stick .card{margin-bottom:8px}.stick .seg{margin-bottom:8px}.stick input{margin-bottom:6px}
+.chips.sc{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.chips.sc::-webkit-scrollbar{display:none}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:10px}.stats b{display:block;font-size:13px}
 .chips{display:flex;gap:6px;margin-top:10px}
 .chip{padding:5px 11px;border-radius:99px;background:var(--s2);color:var(--mu);border:0;font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
 .chip.on{background:var(--ac);color:#000;font-weight:600}
@@ -76,8 +86,9 @@ a{color:var(--ac)}
 <div id="fabw"></div>
 <nav id="nav" hidden></nav>
 <script>
-const APP_VERSION = '1.11.0', MIN_BACKEND = '1.11.0', BUILD = '2026-11-25';
+const APP_VERSION = '1.12.0', MIN_BACKEND = '1.12.0', BUILD = '2026-11-26';
 const CHANGES = [
+  ['1.12.0', 'Kartu total lebih proporsional + perubahan 1 bulan, header Aset/Transaksi menempel, masa berlaku API key, kelola jaringan, log lebih bersih (fallback explorer, kurs IDR tanpa Indodax).'],
   ['1.11.0', 'Menu Saham (PnL), cache instan + muat manual, Wallet dipindah ke Aset, alokasi portofolio, USD/IDR + sembunyikan saldo, status sumber data, jadwal hemat API, aksi massal & ekspor CSV transaksi.'],
   ['1.10.0', 'Salin semua log, Robinhood Chain, Aset per jaringan, alamat wallet di posisi, rentang 1 tahun, Posisi & PnL dihapus.'],
   ['1.9.0', 'Indodax Trade API v2, daftar aset per wallet, posisi manual (staking), impor CSV, halaman kuota & limit API.'],
@@ -267,18 +278,19 @@ function vSum() {
   const tl = Object.values(agg).sort((a, b) => b.usd - a.usd).slice(0, 5), cryptoTot = v.crypto || 1;
   const age = t => t ? ago(t) : '—', stale = m.prices_at && Date.now() - m.prices_at > 3 * 36e5;
   const sec = S.hide ? '' : (S.cur === 'IDR' ? fmtU(p.total_usd) : (p.idr_rate ? fmtI(p.total_idr) : ''));
-  const stat = (l, c) => H('div', {}, H('span', { class: 'mu' }, l), c ? H('b', { class: c.usd >= 0 ? 'up' : 'dn' }, (c.usd >= 0 ? '+' : '') + usd(c.usd) + ' (' + pct(c.pct) + ')') : H('b', { class: 'mu' }, 'menunggu data'));
+  const stat = (l, c) => H('div', { class: 'st3' }, H('span', { class: 'mu' }, l), c ? [H('b', { class: c.usd >= 0 ? 'up' : 'dn' }, (c.usd >= 0 ? '+' : '') + usd(c.usd)), H('span', { class: c.usd >= 0 ? 'up' : 'dn', style: 'font-size:12px' }, pct(c.pct))] : H('b', { class: 'mu', style: 'font-weight:500' }, 'menunggu data'));
   return H('div', {},
     H('div', { class: 'card hero' },
-      H('div', { style: 'display:flex;justify-content:space-between;align-items:center' }, H('span', { class: 'mu' }, 'Total portofolio (crypto + saham)'),
-        H('div', { class: 'chips', style: 'margin:0' }, ['USD', 'IDR'].map(c => H('button', { class: 'chip' + (S.cur === c ? ' on' : ''), onclick: () => { S.cur = c; localStorage.setItem('cur', c); render(); } }, c)))),
-      H('div', { style: 'display:flex;justify-content:space-between;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-top:4px' },
+      H('div', { class: 'hrow' }, H('span', { class: 'mu' }, 'Total portofolio (crypto + saham)'),
+        H('div', { class: 'chips', style: 'margin:0' }, ['USD', 'IDR'].map(c => H('button', { class: 'chip sm' + (S.cur === c ? ' on' : ''), onclick: () => { S.cur = c; localStorage.setItem('cur', c); render(); } }, c)))),
+      H('div', { class: 'hmain' },
         H('div', {}, H('div', { class: 'big' }, usd(v.total)), H('div', { class: 'mu' }, sec)),
-        H('div', { class: 'r', style: 'min-width:128px' }, H('div', { class: 'mu' }, 'Aset likuid'), H('b', {}, usd(v.liquid)), H('div', { class: 'mu', style: 'margin-top:4px' }, 'Aset locked (stake)'), H('b', {}, usd(v.locked)))),
-      H('div', { class: 'stats' }, stat('24 jam', p.change && p.change.d1), stat('7 hari', p.change && p.change.d7)),
+        H('div', { class: 'hside' }, H('div', {}, H('span', { class: 'mu' }, 'Aset likuid'), H('b', {}, usd(v.liquid))), H('div', {}, H('span', { class: 'mu' }, 'Aset locked (stake)'), H('b', {}, usd(v.locked))))),
+      H('div', { class: 'stats3' }, stat('24 jam', p.change && p.change.d1), stat('7 hari', p.change && p.change.d7), stat('1 bulan', p.change && p.change.d30)),
       H('div', { class: 'chips' }, [[7, '7H'], [30, '30H'], [90, '90H'], [365, '1T'], [0, 'Semua']].map(x => H('button', { class: 'chip' + (S.range === x[0] ? ' on' : ''), onclick: () => { S.range = x[0]; render(); } }, x[1]))), chart(pts),
       H('div', { class: stale ? 'warn' : 'mu', style: 'font-size:11px;margin-top:8px' }, 'Dimuat ' + age(S.at) + ' · harga ' + age(m.prices_at) + ' · sync ' + age(m.sync_at) + (S.d.stocks ? ' · saham ' + age(m.stocks_at) : '') + (stale ? ' — data lama, tekan ↻' : '')),
-      m.errors > 0 ? tap(H('div', { class: 'warn', style: 'font-size:12px;margin-top:4px' }, '⚠ ' + m.errors + ' wallet gagal sync · lihat'), () => { S.gm = 'wallet'; go('ast'); }) : null),
+      m.errors > 0 ? tap(H('div', { class: 'warn', style: 'font-size:12px;margin-top:4px' }, '⚠ ' + m.errors + ' wallet gagal sync · lihat'), () => { S.gm = 'wallet'; go('ast'); }) : null,
+      (m.key_warn || []).map(k => tap(H('div', { class: 'warn', style: 'font-size:12px;margin-top:4px' }, '⚠ API key ' + k.name + (k.left >= 0 ? ' habis dalam ' + k.left + ' hari' : ' sudah kedaluwarsa') + ' · lihat'), () => { S.tab = 'set'; openPage('quota'); }))),
     H('div', { class: 'card' }, H('h2', {}, 'Alokasi portofolio'),
       H('select', { onchange: e => { S.alloc = e.target.value; render(); } }, ALLOC.map(x => H('option', { value: x[0], selected: x[0] === S.alloc }, x[1]))),
       segs.length ? [H('div', { class: 'dwrap' }, donut(segs, tot), H('div', { class: 'dc' }, H('b', {}, segs.length), H('span', { class: 'mu' }, 'bagian'))),
@@ -377,7 +389,7 @@ function walletCards(p) {
 }
 function vAst() {
   const p = S.d && S.d.portfolio; if (!p) return load0();
-  const bar = H('div', { class: 'chips', style: 'flex-wrap:wrap;margin-top:8px' }), box = H('div', {});
+  const bar = H('div', { class: 'chips sc', style: 'margin-top:8px' }), box = H('div', {});
   const fill = () => {
     put(bar,
       S.cf ? H('button', { class: 'chip on', onclick: () => { S.cf = ''; fill(); } }, S.cf.toUpperCase() + ' ✕') : null,
@@ -399,9 +411,10 @@ function vAst() {
   };
   fill();
   return H('div', {},
-    H('div', { class: 'card' }, seg([['asset', 'Per aset'], ['chain', 'Per jaringan'], ['wallet', 'Per wallet']], S.gm, k => { S.gm = k; render(); }),
-      H('input', { placeholder: 'Cari simbol, nama, jaringan, wallet…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), bar),
-    S.gm === 'wallet' ? seg([['all', 'Semua'], ['evm', 'EVM'], ['net', 'Jaringan'], ['ex', 'Exchange'], ['man', 'Manual']], S.sub.wal, k => { S.sub.wal = k; render(); }) : null,
+    H('div', { class: 'stick' },
+      H('div', { class: 'card' }, seg([['asset', 'Per aset'], ['chain', 'Per jaringan'], ['wallet', 'Per wallet']], S.gm, k => { S.gm = k; render(); }),
+        H('input', { placeholder: 'Cari simbol, nama, jaringan, wallet…', value: S.q, oninput: e => { S.q = e.target.value; fill(); } }), bar),
+      S.gm === 'wallet' ? seg([['all', 'Semua'], ['evm', 'EVM'], ['net', 'Jaringan'], ['ex', 'Exchange'], ['man', 'Manual']], S.sub.wal, k => { S.sub.wal = k; render(); }) : null),
     S.gm === 'wallet' ? H('div', { class: 'btns', style: 'margin-bottom:10px' }, H('button', { class: 'btn sec', onclick: walAdd }, '+ Tambah wallet')) : null,
     box);
 }
@@ -443,9 +456,9 @@ function vTrx() {
   if (!S.d) return load0();
   const all = S.d.transactions, rev = all.filter(t => (t.type === 'in' || t.type === 'out') && t.source && t.source !== 'manual'), sub = S.sub.trx;
   const head = seg([['hist', 'Riwayat'], ['rev', 'Ditinjau ' + rev.length]], sub, k => { S.sub.trx = k; render(); });
-  const box = H('div', { class: 'card' });
+  const box = H('div', { class: 'card' }), cnt = H('div', { class: 'mu', style: 'font-size:12px;padding-top:2px' });
   let cur = [];
-  const bar = H('div', { class: 'chips', style: 'flex-wrap:wrap;margin:0 0 6px' },
+  const bar = H('div', { class: 'chips sc', style: 'margin:0 0 4px' },
     sub === 'hist' ? [['', 'Semua']].concat(TY).map(x => H('button', { class: 'chip' + (S.tf === x[0] ? ' on' : ''), onclick: () => { S.tf = x[0]; render(); } }, x[1])) : null,
     S.tq ? H('button', { class: 'chip on', onclick: () => { S.tq = ''; render(); } }, S.tq + ' ✕') : null);
   const fill = () => {
@@ -458,8 +471,8 @@ function vTrx() {
       if (d !== last) { rows.push(H('div', { class: 'dh' }, d)); last = d; }
       rows.push(txRow(t));
     });
-    put(box, bar, H('div', { class: 'mu', style: 'margin-bottom:4px' }, cur.length + ' transaksi' + (cur.length > 200 ? ' (200 teratas ditampilkan)' : '')),
-      rows.length ? rows : H('p', { class: 'mu' }, 'Belum ada transaksi. Impor otomatis berjalan saat sync (EVM, Solana, MEXC, Indodax); riwayat lain lewat Impor CSV.'));
+    put(box, rows.length ? rows : H('p', { class: 'mu' }, 'Belum ada transaksi. Impor otomatis berjalan saat sync (EVM, Solana, MEXC, Indodax); riwayat lain lewat Impor CSV.'));
+    cnt.textContent = cur.length + ' transaksi' + (cur.length > 200 ? ' (200 teratas ditampilkan)' : '');
   };
   const bulk = async (op, type) => {
     if (!cur.length) return toast('Tidak ada transaksi pada daftar ini');
@@ -469,12 +482,13 @@ function vTrx() {
     run(async () => { for (let i = 0; i < ids.length; i += 500) await api('txBulk', { op, type, ids: ids.slice(i, i + 500) }); }, 'Selesai');
   };
   fill();
-  return H('div', {}, head,
-    H('div', { class: 'btns', style: 'margin-bottom:10px' }, H('button', { class: 'btn sec', onclick: csvImport }, 'Impor CSV'), H('button', { class: 'btn sec', onclick: txForm }, '+ Manual'),
-      H('button', { class: 'btn sec', onclick: () => cur.length ? csvExport(cur) : toast('Tidak ada data untuk diekspor') }, 'Ekspor CSV')),
-    H('input', { placeholder: 'Cari simbol, wallet, catatan…', value: S.tsq, oninput: e => { S.tsq = e.target.value; fill(); } }),
-    sub === 'rev' ? H('div', { style: 'margin-bottom:10px' }, H('p', { class: 'mu', style: 'margin-bottom:8px' }, 'Transfer otomatis yang belum diklasifikasi. Ketuk satu untuk mengubah, atau terapkan ke semua yang tampil:'),
-      H('div', { class: 'btns' }, H('button', { class: 'btn sec', onclick: () => bulk('type', 'move') }, 'Semua → Internal'), H('button', { class: 'btn del', onclick: () => bulk('delete') }, 'Hapus semua'))) : null,
+  return H('div', {},
+    H('div', { class: 'stick' }, head,
+      H('div', { class: 'btns', style: 'margin-bottom:6px;gap:6px' }, H('button', { class: 'btn sec sm', onclick: csvImport }, 'Impor CSV'), H('button', { class: 'btn sec sm', onclick: txForm }, '+ Manual'),
+        H('button', { class: 'btn sec sm', onclick: () => cur.length ? csvExport(cur) : toast('Tidak ada data untuk diekspor') }, 'Ekspor CSV'),
+        sub === 'rev' ? [H('button', { class: 'btn sec sm', onclick: () => bulk('type', 'move') }, 'Semua → Internal'), H('button', { class: 'btn del sm', onclick: () => bulk('delete') }, 'Hapus semua')] : null),
+      H('input', { placeholder: 'Cari simbol, wallet, catatan…', value: S.tsq, oninput: e => { S.tsq = e.target.value; fill(); } }),
+      bar, cnt),
     box);
 }
 
@@ -835,12 +849,23 @@ function pQuota() {
         H('div', { style: 'display:flex;justify-content:space-between;gap:8px' }, H('b', {}, x.name), H('span', { class: 'mu' }, x.limit ? qty(x.used) + ' / ' + qty(x.limit) + ' ' + x.unit : x.used != null ? qty(x.used) + ' panggilan hari ini' : '–')),
         x.limit ? H('div', { class: 'pb' }, H('i', { style: 'width:' + Math.min(100, x.used / x.limit * 100) + '%;background:' + (x.used / x.limit > .8 ? 'var(--dn)' : 'var(--ac)') })) : null,
         H('span', { class: 'mu', style: 'white-space:normal;display:block' }, x.note || ''),
-        x.link && /^https:\/\//.test(x.link) ? H('a', { href: x.link, target: '_blank', rel: 'noopener' }, 'Buka dashboard') : null)) : H('p', { class: 'mu' }, 'Memuat…')),
+        x.link && /^https:\/\//.test(x.link) ? H('a', { href: x.link, target: '_blank', rel: 'noopener' }, 'Buka dashboard') : null,
+        x.keyname ? keyForm(x) : null)) : H('p', { class: 'mu' }, 'Memuat…')),
     q ? H('p', { class: 'mu', style: 'padding:0 4px' }, 'Hitungan panggilan berasal dari Apps Script ini (perkiraan). Hanya CoinGecko dan Blockscout yang melaporkan sisa kredit resmi.') : null);
 }
 
+function keyForm(x) {
+  const d = H('input', { type: 'date', value: x.created || '', max: new Date().toISOString().slice(0, 10), style: 'flex:1;margin:0;min-width:0' });
+  const n = H('input', { type: 'number', min: '0', max: '3650', value: x.days != null ? x.days : 90, title: 'Masa berlaku dalam hari; 0 = tanpa kedaluwarsa', style: 'width:76px;margin:0' });
+  return H('div', { style: 'display:flex;gap:6px;align-items:center;margin-top:8px' }, H('span', { class: 'mu', style: 'flex:none' }, 'Dibuat'), d, n, H('span', { class: 'mu', style: 'flex:none' }, 'hari'),
+    H('button', { class: 'chip on', onclick: () => run(async () => { await api('keyDate', { name: x.keyname, created: d.value, days: n.value }); S.quota = await api('quota'); }, 'Tanggal key disimpan') }, 'Simpan'));
+}
 function pSrc() {
   const r = S.src, groups = r ? [...new Set(r.items.map(i => i.group))] : [];
+  const tog = (key, on) => run(async () => {
+    await api('chainSet', { key, enabled: on });
+    S.src = Object.assign({}, S.src, { chains: S.src.chains.map(c => c.key === key ? Object.assign({}, c, { enabled: on, down: false }) : c) });
+  }, on ? 'Jaringan diaktifkan' : 'Jaringan dinonaktifkan');
   return H('div', {},
     H('div', { class: 'card' }, H('h2', {}, 'Status sumber data'),
       H('p', { class: 'mu', style: 'margin-bottom:10px' }, 'Menguji koneksi ke tiap penyedia sekarang (puluhan panggilan paralel; tidak mengubah data).'),
@@ -848,7 +873,13 @@ function pSrc() {
       r ? H('p', { class: 'mu', style: 'margin-top:8px' }, r.items.filter(i => i.ok === true).length + ' ✓ · ' + r.items.filter(i => i.ok === false).length + ' ✗ · ' + r.items.filter(i => i.ok === null).length + ' dilewati · ' + ago(r.at)) : null),
     groups.map(g => H('div', { class: 'card' }, H('h2', {}, g), r.items.filter(i => i.group === g).map(i => H('div', { class: 'row', style: 'align-items:flex-start' },
       H('span', { class: 'st ' + (i.ok === true ? 'ok' : i.ok === false ? 'er' : ''), style: 'margin-top:5px' }),
-      H('div', { class: 'g' }, H('b', {}, i.name), H('span', { class: 'mu', style: 'white-space:normal' }, i.detail), i.hint ? H('span', { class: 'warn', style: 'white-space:normal;display:block;font-size:12px' }, i.hint) : null))))));
+      H('div', { class: 'g' }, H('b', {}, i.name), H('span', { class: 'mu', style: 'white-space:normal' }, i.detail), i.hint ? H('span', { class: 'warn', style: 'white-space:normal;display:block;font-size:12px' }, i.hint) : null),
+      i.ok === false && i.chain ? H('button', { class: 'chip', onclick: () => confirm('Nonaktifkan jaringan ' + i.chain + '? Aset di jaringan ini tidak akan dipindai.') && tog(i.chain, false) }, 'Nonaktifkan') : null)))),
+    r && r.chains ? H('div', { class: 'card' }, H('h2', {}, 'Jaringan'),
+      H('p', { class: 'mu', style: 'margin-bottom:6px' }, 'Nonaktifkan jaringan yang tidak dipakai agar tidak ikut dipindai. Jaringan yang gagal berulang dilewati otomatis selama 6 jam.'),
+      r.chains.map(c => H('div', { class: 'row' }, H('span', { class: 'st ' + (c.enabled ? (c.down ? 'er' : 'ok') : '') }),
+        H('div', { class: 'g' }, H('b', {}, c.name), H('span', { class: 'mu' }, c.enabled ? (c.down ? 'dilewati sementara' : 'aktif') : 'nonaktif')),
+        H('button', { class: 'chip', onclick: () => tog(c.key, !c.enabled) }, c.enabled ? 'Nonaktifkan' : 'Aktifkan')))) : null);
 }
 function pJad() {
   const cur = (S.d && S.d.meta && S.d.meta.schedule) || 'normal';
@@ -890,6 +921,8 @@ function render() {
   put($('#app'), ({ sum: vSum, ast: vAst, trx: vTrx, stk: vStk, set: vSet })[S.tab]());
   put($('#nav'), TABS.map(x => H('button', { class: S.tab === x[0] ? 'on' : '', onclick: () => { S.cf = ''; S.wf = ''; S.q = ''; S.tq = ''; S.tsq = ''; go(x[0]); } }, icon(x[2]), x[1])));
   put($('#fabw'), S.tab === 'set' ? null : H('button', { id: 'fab', onclick: fabGo }, '+'));
+  const hd = $('#hd');
+  if (document.documentElement && hd && hd.offsetHeight) document.documentElement.style.setProperty('--hdh', hd.offsetHeight + 'px');
 }
 function gate(title, sub, form) {
   $('#hd').hidden = true; $('#nav').hidden = true; put($('#fabw'));
